@@ -20,7 +20,12 @@ package au.com.grieve.portalnetwork;
 
 import au.com.grieve.bcf.platform.bukkit.BukkitCommandManager;
 import au.com.grieve.portalnetwork.commands.MainCommand;
-import au.com.grieve.portalnetwork.config.*;
+import au.com.grieve.portalnetwork.config.BlockConfig;
+import au.com.grieve.portalnetwork.config.Config;
+import au.com.grieve.portalnetwork.config.ItemConfig;
+import au.com.grieve.portalnetwork.config.PortalConfig;
+import au.com.grieve.portalnetwork.config.RecipeConfig;
+import au.com.grieve.portalnetwork.config.SoundConfig;
 import au.com.grieve.portalnetwork.listeners.PortalEvents;
 import au.com.grieve.portalnetwork.parsers.PortalTypeParser;
 import au.com.grieve.portalnetwork.portals.End;
@@ -137,7 +142,9 @@ public final class PortalNetwork extends JavaPlugin {
   @Override
   public void onDisable() {
     // Plugin shutdown logic
-    if (portalManager != null) portalManager.clear();
+    if (portalManager != null) {
+      portalManager.clear();
+    }
   }
 
   private void initConfig() throws IOException {

@@ -36,6 +36,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+@SuppressWarnings("unused")
 @Command("portalnetwork|pn")
 @Permission("portalnetwork.admin")
 @Permission("portalnetwork.command.reload")
@@ -64,6 +65,7 @@ public class MainCommand extends BukkitCommand {
     // Show list of child commands
   }
 
+  @SuppressWarnings("unused")
   @Arg("reload(description=Reload Plugin)")
   @Permission("portalnetwork.admin")
   @Permission("portalnetwork.command.reload")
@@ -84,6 +86,7 @@ public class MainCommand extends BukkitCommand {
     }
   }
 
+  @SuppressWarnings("unused")
   @Arg("list(description=List placed portals)")
   @Permission("portalnetwork.admin")
   @Permission("portalnetwork.command.list")

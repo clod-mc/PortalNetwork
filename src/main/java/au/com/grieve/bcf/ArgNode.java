@@ -32,9 +32,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 
+@Getter
 public class ArgNode {
-  @Getter final String name;
-  @Getter final Map<String, String> parameters = new HashMap<>();
+  final String name;
+  final Map<String, String> parameters = new HashMap<>();
 
   public ArgNode(String name) {
     this.name = name;

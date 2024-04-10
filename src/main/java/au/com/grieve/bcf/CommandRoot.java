@@ -30,7 +30,13 @@ import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.exceptions.ParserRequiredArgumentException;
 import au.com.grieve.bcf.exceptions.SwitchNotFoundException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
@@ -48,14 +54,6 @@ public class CommandRoot {
 
   protected Parser getParser(ArgNode argNode, CommandContext context) {
     return manager.getParser(argNode, context);
-  }
-
-  public CommandExecute execute(List<String> input, CommandContext context) {
-    return execute(command, input, context);
-  }
-
-  public List<Candidate> complete(List<String> input, CommandContext context) {
-    return complete(command, input, context);
   }
 
   protected CommandExecute getErrorExecute(
@@ -80,6 +78,10 @@ public class CommandRoot {
       }
     }
     return null;
+  }
+
+  public CommandExecute execute(List<String> input, CommandContext context) {
+    return execute(command, input, context);
   }
 
   public CommandExecute execute(BaseCommand command, List<String> input, CommandContext context) {
@@ -181,9 +183,7 @@ public class CommandRoot {
     return best;
   }
 
-  /**
-   * Execution for methods
-   */
+  /** Execution for methods */
   protected CommandExecute executeMethod(
       Method method, BaseCommand command, List<String> input, CommandContext context) {
     List<CommandExecute> commandExecutes = new ArrayList<>();
@@ -196,7 +196,7 @@ public class CommandRoot {
       try {
         parseArg(currentArgs, currentInput, currentContext);
 
-        if (currentInput.size() > 0) {
+        if (!currentInput.isEmpty()) {
           continue;
         }
 
@@ -211,7 +211,8 @@ public class CommandRoot {
           }
         }
         commandExecutes.add(new CommandExecute(command, method, results, currentContext));
-      } catch (ParserRequiredArgumentException ignored) {
+      } catch (ParserRequiredArgumentException e) {
+        // ignore
       } catch (SwitchNotFoundException e) {
         commandExecutes.add(
             getErrorExecute(command, "Invalid switch: " + e.getSwitchName(), currentContext));
@@ -255,6 +256,10 @@ public class CommandRoot {
     return best;
   }
 
+  public List<Candidate> complete(List<String> input, CommandContext context) {
+    return complete(command, input, context);
+  }
+
   public List<Candidate> complete(BaseCommand command, List<String> input, CommandContext context) {
     List<Candidate> ret = new ArrayList<>();
 
@@ -270,7 +275,7 @@ public class CommandRoot {
           parseArg(currentArgs, currentInput, currentContext, false);
         } catch (ParserRequiredArgumentException | ParserInvalidResultException e) {
           // End of chain so save completions if no more input
-          if (currentInput.size() == 0) {
+          if (currentInput.isEmpty()) {
             ret.addAll(e.getParser().getCompletions());
           }
           continue;
@@ -304,7 +309,7 @@ public class CommandRoot {
 
         // Process methods
         for (Method method : command.getClass().getDeclaredMethods()) {
-          ret.addAll(completeMethod(method, command, currentInput, currentContext));
+          ret.addAll(completeMethod(method, currentInput, currentContext));
         }
 
         // Check each child class as well
@@ -323,7 +328,7 @@ public class CommandRoot {
 
       // Process methods
       for (Method method : command.getClass().getDeclaredMethods()) {
-        ret.addAll(completeMethod(method, command, currentInput, currentContext));
+        ret.addAll(completeMethod(method, currentInput, currentContext));
       }
 
       // Check each child class as well
@@ -344,11 +349,9 @@ public class CommandRoot {
     return ret;
   }
 
-  /**
-   * Completion for methods
-   */
+  /** Completion for methods */
   protected List<Candidate> completeMethod(
-      Method method, BaseCommand command, List<String> input, CommandContext context) {
+      Method method, List<String> input, CommandContext context) {
     List<Candidate> ret = new ArrayList<>();
     for (Arg methodArgs : method.getAnnotationsByType(Arg.class)) {
       List<String> currentInput = new ArrayList<>(input);
@@ -359,12 +362,12 @@ public class CommandRoot {
         parseArg(currentArgs, currentInput, currentContext, false);
       } catch (ParserRequiredArgumentException | ParserInvalidResultException e) {
         // End of chain so save completion if no more input
-        if (currentInput.size() == 0) {
+        if (currentInput.isEmpty()) {
           ret.addAll(e.getParser().getCompletions());
 
           if (currentContext.getCurrentParser().getParameter("switch", null) == null) {
-            if (currentInput.stream().allMatch(s -> s.equals(""))
-                && (input.size() == 0 || input.get(input.size() - 1).equals(""))) {
+            if (currentInput.stream().allMatch(String::isEmpty)
+                && (input.isEmpty() || input.get(input.size() - 1).isEmpty())) {
               // Add switches
               ret.addAll(
                   currentContext.getSwitches().stream()
@@ -428,11 +431,44 @@ public class CommandRoot {
     parseArg(argNodes, input, context, true);
   }
 
-  protected void parseSwitches(List<String> input, CommandContext context, boolean defaults)
+  protected void parseArg(
+      List<ArgNode> argNodes, List<String> input, CommandContext context, boolean defaults)
+      throws ParserRequiredArgumentException,
+          ParserInvalidResultException,
+          SwitchNotFoundException {
+    while (!argNodes.isEmpty()) {
+      ArgNode node = argNodes.remove(0);
+
+      Parser parser = getParser(node, context);
+      if (parser == null) {
+        break;
+      }
+
+      context.getParsers().add(parser);
+
+      // Take care of switches first
+      if (node.getParameters().containsKey("switch")) {
+        context.getSwitches().add(parser);
+      } else {
+        // Handle switches
+        parseSwitches(input, context);
+
+        context.setCurrentParser(parser);
+
+        parser.parse(input, defaults);
+        parser.getResult();
+      }
+    }
+
+    // Handle any remaining switches
+    parseSwitches(input, context);
+  }
+
+  protected void parseSwitches(List<String> input, CommandContext context)
       throws SwitchNotFoundException,
           ParserRequiredArgumentException,
           ParserInvalidResultException {
-    while (input.size() > 0 && input.get(0).startsWith("-")) {
+    while (!input.isEmpty() && input.get(0).startsWith("-")) {
       String name = input.remove(0).substring(1);
       Parser parser =
           context.getSwitches().stream()
@@ -456,38 +492,5 @@ public class CommandRoot {
       parser.parse(input, false);
       parser.getResult();
     }
-  }
-
-  protected void parseArg(
-      List<ArgNode> argNodes, List<String> input, CommandContext context, boolean defaults)
-      throws ParserRequiredArgumentException,
-          ParserInvalidResultException,
-          SwitchNotFoundException {
-    while (argNodes.size() > 0) {
-      ArgNode node = argNodes.remove(0);
-
-      Parser parser = getParser(node, context);
-      if (parser == null) {
-        break;
-      }
-
-      context.getParsers().add(parser);
-
-      // Take care of switches first
-      if (node.getParameters().containsKey("switch")) {
-        context.getSwitches().add(parser);
-      } else {
-        // Handle switches
-        parseSwitches(input, context, defaults);
-
-        context.setCurrentParser(parser);
-
-        parser.parse(input, defaults);
-        parser.getResult();
-      }
-    }
-
-    // Handle any remaining switches
-    parseSwitches(input, context, defaults);
   }
 }

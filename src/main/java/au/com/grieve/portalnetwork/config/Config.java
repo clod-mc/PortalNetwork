@@ -31,7 +31,8 @@ import lombok.ToString;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
+@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+// Jackson requires that the fields are not final
 @ToString
 public class Config {
   public static final ObjectMapper OBJECT_MAPPER =

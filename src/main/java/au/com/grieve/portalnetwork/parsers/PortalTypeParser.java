@@ -19,20 +19,21 @@
 package au.com.grieve.portalnetwork.parsers;
 
 import au.com.grieve.bcf.ArgNode;
+import au.com.grieve.bcf.BaseCommand;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
+import au.com.grieve.bcf.CommandRoot;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.parsers.SingleParser;
 import au.com.grieve.portalnetwork.PortalNetwork;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Type of Portal
- */
+/** Type of Portal */
 public class PortalTypeParser extends SingleParser {
 
-  public PortalTypeParser(CommandManager manager, ArgNode argNode, CommandContext context) {
+  public PortalTypeParser(
+      CommandManager<BaseCommand, CommandRoot> manager, ArgNode argNode, CommandContext context) {
     super(manager, argNode, context);
   }
 

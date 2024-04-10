@@ -22,7 +22,11 @@ import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.PortalNetwork;
 import au.com.grieve.portalnetwork.config.PortalConfig;
 import com.google.common.collect.Streams;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,7 +34,11 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.*;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
@@ -99,7 +107,8 @@ public class BasePortal {
 
   @Getter boolean valid = false;
   // Size Vectors
-  @Getter BlockVector left, right;
+  @Getter BlockVector left;
+  @Getter BlockVector right;
   // Dialed
   @Getter BasePortal dialledPortal;
 
@@ -149,41 +158,41 @@ public class BasePortal {
             location.clone().add(0, 0, -1));
 
     int count = 0;
-    int non_idx = -1;
+    int nonIdx = -1;
 
     for (int idx = 0; idx < blocks.size(); idx++) {
       if (Tag.WOOL.isTagged(blocks.get(idx).getBlock().getType())) {
         count += 1;
       } else {
-        non_idx = idx;
+        nonIdx = idx;
       }
     }
 
-    if (count != 3 || non_idx == -1) {
+    if (count != 3 || nonIdx == -1) {
       setValid(false);
       manager.reindexPortal(this);
       return;
     }
 
     // Determine address block. It should be opposite non_idx
-    Location address_block = blocks.get((non_idx + 2) % 4);
-    address = WOOL_MAPPINGS.indexOf(address_block.getBlock().getType());
-    location.setDirection(location.toVector().subtract(address_block.toVector()));
+    Location addressBlock = blocks.get((nonIdx + 2) % 4);
+    address = WOOL_MAPPINGS.indexOf(addressBlock.getBlock().getType());
+    location.setDirection(location.toVector().subtract(addressBlock.toVector()));
 
     // Net block is previous and next to non_idx
-    Location left_block = blocks.get(((non_idx - 1) % 4 + 4) % 4);
-    Location right_block = blocks.get(((non_idx + 1) % 4 + 4) % 4);
+    Location leftBlock = blocks.get(((nonIdx - 1) % 4 + 4) % 4);
+    Location rightBlock = blocks.get(((nonIdx + 1) % 4 + 4) % 4);
     network =
-        (WOOL_MAPPINGS.indexOf(left_block.getBlock().getType()) << 4)
-            + WOOL_MAPPINGS.indexOf(right_block.getBlock().getType());
+        (WOOL_MAPPINGS.indexOf(leftBlock.getBlock().getType()) << 4)
+            + WOOL_MAPPINGS.indexOf(rightBlock.getBlock().getType());
 
     // If address and network already exist pop out the address block
     BasePortal p = manager.find(network, address);
     if (p != null && p != this) {
-      Material material = address_block.getBlock().getType();
-      address_block.getBlock().setType(Material.AIR);
-      if (address_block.getWorld() != null) {
-        address_block.getWorld().dropItemNaturally(address_block, new ItemStack(material));
+      Material material = addressBlock.getBlock().getType();
+      addressBlock.getBlock().setType(Material.AIR);
+      if (addressBlock.getWorld() != null) {
+        addressBlock.getWorld().dropItemNaturally(addressBlock, new ItemStack(material));
       }
       setValid(false);
       manager.reindexPortal(this);
@@ -191,24 +200,24 @@ public class BasePortal {
     }
 
     // Get Width of portal by counting obsidian blocks to a max of 10 each direction
-    Vector left_unit_vector = left_block.toVector().subtract(location.toVector()).normalize();
-    left = left_unit_vector.toBlockVector();
+    Vector leftUnitVector = leftBlock.toVector().subtract(location.toVector()).normalize();
+    left = leftUnitVector.toBlockVector();
     for (int i = 0; i < 10; i++) {
-      Vector test_left = left.clone().add(left_unit_vector);
-      if (location.clone().add(test_left).getBlock().getType() != Material.OBSIDIAN) {
+      Vector testLeft = left.clone().add(leftUnitVector);
+      if (location.clone().add(testLeft).getBlock().getType() != Material.OBSIDIAN) {
         break;
       }
-      left = test_left.toBlockVector();
+      left = testLeft.toBlockVector();
     }
 
-    Vector right_unit_vector = right_block.toVector().subtract(location.toVector()).normalize();
-    right = right_unit_vector.toBlockVector();
+    Vector rightUnitVector = rightBlock.toVector().subtract(location.toVector()).normalize();
+    right = rightUnitVector.toBlockVector();
     for (int i = 0; i < 10; i++) {
-      Vector test_right = right.clone().add(right_unit_vector);
-      if (location.clone().add(test_right).getBlock().getType() != Material.OBSIDIAN) {
+      Vector testRight = right.clone().add(rightUnitVector);
+      if (location.clone().add(testRight).getBlock().getType() != Material.OBSIDIAN) {
         break;
       }
-      right = test_right.toBlockVector();
+      right = testRight.toBlockVector();
     }
 
     setValid(true);
@@ -731,12 +740,13 @@ public class BasePortal {
     }
   }
 
+  @Getter
   static class PositionVelocity {
-    @Getter final Location location;
+    final Location location;
 
-    @Getter final Vector velocity;
+    final Vector velocity;
 
-    @Getter final double yawDiff;
+    final double yawDiff;
 
     PositionVelocity(Location location, Vector velocity, double yawDiff) {
       this.location = location;

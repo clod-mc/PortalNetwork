@@ -26,9 +26,10 @@ package au.com.grieve.bcf.exceptions;
 import au.com.grieve.bcf.Parser;
 import lombok.Getter;
 
+@Getter
 public class ParserException extends Exception {
 
-  @Getter final Parser parser;
+  final Parser parser;
 
   public ParserException(Parser parser) {
     this(parser, null, null);

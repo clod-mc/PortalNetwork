@@ -24,17 +24,23 @@
 package au.com.grieve.bcf;
 
 import au.com.grieve.bcf.annotations.Command;
-import au.com.grieve.bcf.parsers.*;
+import au.com.grieve.bcf.parsers.DoubleParser;
+import au.com.grieve.bcf.parsers.FloatParser;
+import au.com.grieve.bcf.parsers.IntegerParser;
+import au.com.grieve.bcf.parsers.LiteralParser;
+import au.com.grieve.bcf.parsers.StringParser;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.Bukkit;
 
 @Getter
-public abstract class CommandManager<BC extends BaseCommand, RT extends CommandRoot> {
+public abstract class CommandManager<BT extends BaseCommand, RT extends CommandRoot> {
 
   protected final Map<Class<? extends BaseCommand>, CommandConfig<RT>> commands = new HashMap<>();
   protected final Map<String, Class<? extends Parser>> parsers = new HashMap<>();
@@ -48,7 +54,7 @@ public abstract class CommandManager<BC extends BaseCommand, RT extends CommandR
   }
 
   @SuppressWarnings("unused")
-  public void registerCommand(BC cmd) {
+  public void registerCommand(BT cmd) {
     // As a root command cmd needs to have a @Command annotation
     if (cmd.getClass().getAnnotation(Command.class) == null) {
       throw new RuntimeException("Missing required @Command");
@@ -63,7 +69,7 @@ public abstract class CommandManager<BC extends BaseCommand, RT extends CommandR
   }
 
   @SuppressWarnings("unused")
-  public void registerSubCommand(Class<? extends BC> parentClass, BC cmd) {
+  public void registerSubCommand(Class<? extends BT> parentClass, BT cmd) {
     // Make sure parentClass is registered
     CommandConfig<RT> parentCommandConfig = commands.get(parentClass);
 
@@ -100,7 +106,7 @@ public abstract class CommandManager<BC extends BaseCommand, RT extends CommandR
         | NoSuchMethodException
         | InvocationTargetException
         | IllegalAccessException e) {
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, e.getMessage(), e);
     }
     return null;
   }

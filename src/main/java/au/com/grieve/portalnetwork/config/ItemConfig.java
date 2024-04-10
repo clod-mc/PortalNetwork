@@ -26,11 +26,11 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.bukkit.Material;
 
+@SuppressWarnings("CanBeFinal")
 @AllArgsConstructor
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
-@SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
 @ToString
 public class ItemConfig {
   @JsonDeserialize(using = Converter.MaterialDeserializer.class)

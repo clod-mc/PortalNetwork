@@ -23,7 +23,11 @@
 
 package au.com.grieve.bcf.parsers;
 
-import au.com.grieve.bcf.*;
+import au.com.grieve.bcf.ArgNode;
+import au.com.grieve.bcf.Candidate;
+import au.com.grieve.bcf.CommandContext;
+import au.com.grieve.bcf.CommandManager;
+import au.com.grieve.bcf.Parser;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.exceptions.ParserRequiredArgumentException;
 import java.util.ArrayList;
@@ -47,7 +51,7 @@ public abstract class SingleParser extends Parser {
   @Override
   public void parse(List<String> input, boolean defaults) throws ParserRequiredArgumentException {
     parsed = true;
-    if (input == null || input.size() == 0) {
+    if (input == null || input.isEmpty()) {
       // Check if a default is provided or if its not required
       if (!defaults
           || (getParameter("default") == null && getParameter("required", "true").equals("true"))) {

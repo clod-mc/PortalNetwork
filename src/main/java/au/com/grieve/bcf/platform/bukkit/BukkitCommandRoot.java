@@ -113,20 +113,20 @@ public class BukkitCommandRoot extends CommandRoot {
 
   @SuppressWarnings("unused")
   protected List<Candidate> completeMethod(
-      Method method, BaseCommand command, List<String> input, BukkitCommandContext context) {
+      Method method, List<String> input, BukkitCommandContext context) {
     Permission[] permissions = method.getAnnotationsByType(Permission.class);
 
     if (permissions.length > 0) {
       // Check Sender has any permissions
       for (Permission permission : permissions) {
         if (context.getSender().hasPermission(permission.value())) {
-          return super.completeMethod(method, command, input, context);
+          return super.completeMethod(method, input, context);
         }
       }
 
       return new ArrayList<>();
     }
 
-    return super.completeMethod(method, command, input, context);
+    return super.completeMethod(method, input, context);
   }
 }

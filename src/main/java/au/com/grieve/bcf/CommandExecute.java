@@ -28,17 +28,20 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 
+@Getter
 public class CommandExecute {
-  @Getter private final Method method;
+  private final Method method;
 
-  @Getter private final BaseCommand command;
+  private final BaseCommand command;
 
-  @Getter private final List<Object> parameters = new ArrayList<>();
+  private final List<Object> parameters = new ArrayList<>();
 
-  @Getter private final CommandContext context;
+  private final CommandContext context;
 
   public CommandExecute(
       BaseCommand command, Method method, List<Object> parameters, CommandContext context) {
@@ -57,7 +60,7 @@ public class CommandExecute {
   /**
    * Execute method, prepending args and filling missing parameters with null
    */
-  public Object invoke(Object... args) {
+  public void invoke(Object... args) {
     List<Object> param = new ArrayList<>(Arrays.asList(args));
     param.addAll(parameters);
 
@@ -67,25 +70,27 @@ public class CommandExecute {
     }
 
     try {
-      return method.invoke(command, param.toArray());
+      method.invoke(command, param.toArray());
     } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-      System.err.println(
-          "Error executing Command: "
-              + command.getClass().getName()
-              + "."
-              + method.getName()
-              + "("
-              + Arrays.stream(method.getParameterTypes())
-                  .map(Class::getName)
-                  .collect(Collectors.joining(", "))
-              + ")"
-              + " called with ("
-              + param.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", "))
-              + ")");
-
-      e.printStackTrace();
+      Bukkit.getLogger()
+          .log(
+              Level.SEVERE,
+              "Error executing Command: "
+                  + command.getClass().getName()
+                  + "."
+                  + method.getName()
+                  + "("
+                  + Arrays.stream(method.getParameterTypes())
+                      .map(Class::getName)
+                      .collect(Collectors.joining(", "))
+                  + ")"
+                  + " called with ("
+                  + param.stream()
+                      .map(c -> c.getClass().getName())
+                      .collect(Collectors.joining(", "))
+                  + ")",
+              e);
     }
-    return null;
   }
 
   @Override

@@ -26,10 +26,10 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.bukkit.Sound;
 
+@SuppressWarnings("CanBeFinal")
 @AllArgsConstructor
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
 @NoArgsConstructor
 @ToString
 public class SoundConfig {

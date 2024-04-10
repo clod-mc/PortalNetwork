@@ -29,10 +29,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -72,7 +80,7 @@ public class PortalManager {
   /**
    * Register a new Portal Class
    *
-   * @param name        Name of Portal Type
+   * @param name Name of Portal Type
    * @param portalClass Class of Portal
    */
   public void registerPortalClass(
@@ -91,13 +99,14 @@ public class PortalManager {
           recipe.setIngredient(ingredient.getKey(), ingredient.getValue());
         }
         plugin.getServer().addRecipe(recipe);
-      } catch (InvalidPortalException ignored) {
+      } catch (InvalidPortalException e) {
+        // ignored
       }
     }
   }
 
   public void clear() {
-    while (portals.size() > 0) {
+    while (!portals.isEmpty()) {
       BasePortal portal = portals.remove(0);
       portal.remove();
     }
@@ -108,7 +117,8 @@ public class PortalManager {
     YamlConfiguration portalConfig = new YamlConfiguration();
     try {
       portalConfig.load(new File(plugin.getDataFolder(), "portal-data.yml"));
-    } catch (FileNotFoundException ignored) {
+    } catch (FileNotFoundException e) {
+      // ignored
     } catch (IOException | InvalidConfigurationException e) {
       plugin
           .getLogger()
@@ -131,7 +141,7 @@ public class PortalManager {
           portal =
               createPortal(portalData.getString("portal_type"), portalData.getLocation("location"));
         } catch (InvalidPortalException e) {
-          e.printStackTrace();
+          Bukkit.getLogger().log(Level.SEVERE, e.getMessage(), e);
           continue;
         }
 
@@ -172,9 +182,7 @@ public class PortalManager {
     }
   }
 
-  /**
-   * Create a new portal
-   */
+  /** Create a new portal */
   @SuppressWarnings("UnusedReturnValue")
   public BasePortal createPortal(String portalType, Location location)
       throws InvalidPortalException {
@@ -194,7 +202,7 @@ public class PortalManager {
         | InstantiationException
         | InvocationTargetException
         | IllegalAccessException e) {
-      e.printStackTrace();
+      Bukkit.getLogger().log(Level.SEVERE, e.getMessage(), e);
       throw new InvalidPortalException("Unable to create portal");
     }
 
@@ -258,9 +266,7 @@ public class PortalManager {
     }
   }
 
-  /**
-   * Find a portal
-   */
+  /** Find a portal */
   public BasePortal find(Integer network, Integer address, Boolean valid) {
     for (BasePortal portal : portals) {
       if (valid != null && portal.isValid() != valid) {
@@ -284,32 +290,7 @@ public class PortalManager {
     return find(network, address, null);
   }
 
-  /**
-   * Get a portal based upon its inside
-   */
-  public BasePortal findByPortal(@NonNull BlockVector search, Boolean valid) {
-    BasePortal portal =
-        indexPortals.entrySet().stream()
-            .filter(e -> e.getKey().equals(search))
-            .map(Map.Entry::getValue)
-            .findFirst()
-            .orElse(null);
-
-    if (portal != null) {
-      if (valid == null || valid == portal.isValid()) {
-        return portal;
-      }
-    }
-    return null;
-  }
-
-  public BasePortal findByPortal(@NonNull Location location) {
-    return findByPortal(location.toVector().toBlockVector(), null);
-  }
-
-  /**
-   * Get a portal at location
-   */
+  /** Get a portal at location */
   public BasePortal find(@NonNull BlockVector search, Boolean valid) {
     BasePortal portal =
         Stream.concat(
@@ -328,9 +309,7 @@ public class PortalManager {
     return null;
   }
 
-  /**
-   * Get a portal at location
-   */
+  /** Get a portal at location */
   public BasePortal find(@NonNull Location location, Boolean valid, int distance) {
     BlockVector search = location.toVector().toBlockVector();
     BasePortal portal;
@@ -362,6 +341,27 @@ public class PortalManager {
 
   public BasePortal find(@NonNull Location location, int distance) {
     return find(location, null, distance);
+  }
+
+  /** Get a portal based upon its inside */
+  public BasePortal findByPortal(@NonNull BlockVector search, Boolean valid) {
+    BasePortal portal =
+        indexPortals.entrySet().stream()
+            .filter(e -> e.getKey().equals(search))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElse(null);
+
+    if (portal != null) {
+      if (valid == null || valid == portal.isValid()) {
+        return portal;
+      }
+    }
+    return null;
+  }
+
+  public BasePortal findByPortal(@NonNull Location location) {
+    return findByPortal(location.toVector().toBlockVector(), null);
   }
 
   public BasePortal getPortal(@NonNull Location location) {

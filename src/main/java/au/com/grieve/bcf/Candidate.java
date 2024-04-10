@@ -35,10 +35,6 @@ public class Candidate {
 
   private final String key;
 
-  public Candidate(String value) {
-    this(value, value, null, null);
-  }
-
   public Candidate(String value, String title, String description, String key) {
     this.value = value;
     this.title = title;

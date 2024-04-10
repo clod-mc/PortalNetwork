@@ -28,11 +28,12 @@ import au.com.grieve.bcf.annotations.Error;
 import java.lang.reflect.Method;
 import lombok.Getter;
 
+@Getter
 public abstract class BaseCommand {
 
-  @Getter private final Method errorMethod;
+  private final Method errorMethod;
 
-  @Getter private final Method defaultMethod;
+  private final Method defaultMethod;
 
   public BaseCommand() {
     Method errorMethod = null;

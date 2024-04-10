@@ -24,14 +24,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+@SuppressWarnings("CanBeFinal")
 @AllArgsConstructor
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
 @NoArgsConstructor
 @ToString
 public class PortalConfig {
-
   private ItemConfig item;
   private BlockConfig block;
   private SoundConfig sound;

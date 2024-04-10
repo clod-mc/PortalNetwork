@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 
+@SuppressWarnings("CanBeFinal")
 @Getter
 public abstract class Parser {
   // Data

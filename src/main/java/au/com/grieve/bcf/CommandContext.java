@@ -48,11 +48,5 @@ public class CommandContext {
 
   public CommandContext copy() {
     return new CommandContext(this);
-    //        try {
-    //            return getClass().getConstructor(CommandContext.class).newInstance(this);
-    //        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
-    // IllegalAccessException e) {
-    //            throw new RuntimeException(e);
-    //        }
   }
 }
