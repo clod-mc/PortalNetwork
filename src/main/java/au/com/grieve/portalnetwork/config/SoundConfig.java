@@ -33,9 +33,9 @@ import org.bukkit.Sound;
 @NoArgsConstructor
 @ToString
 public class SoundConfig {
-    @JsonDeserialize(using = Converter.SoundDeserializer.class)
-    private Sound start = Sound.BLOCK_BEACON_ACTIVATE;
+  @JsonDeserialize(using = Converter.SoundDeserializer.class)
+  private Sound start = Sound.BLOCK_BEACON_ACTIVATE;
 
-    @JsonDeserialize(using = Converter.SoundDeserializer.class)
-    private Sound stop = Sound.BLOCK_BEACON_DEACTIVATE;
+  @JsonDeserialize(using = Converter.SoundDeserializer.class)
+  private Sound stop = Sound.BLOCK_BEACON_DEACTIVATE;
 }

@@ -25,37 +25,32 @@ package au.com.grieve.bcf;
 
 import au.com.grieve.bcf.annotations.Default;
 import au.com.grieve.bcf.annotations.Error;
-import lombok.Getter;
-
 import java.lang.reflect.Method;
+import lombok.Getter;
 
 public abstract class BaseCommand {
 
-    @Getter
-    private final Method errorMethod;
+  @Getter private final Method errorMethod;
 
-    @Getter
-    private final Method defaultMethod;
+  @Getter private final Method defaultMethod;
 
-    public BaseCommand() {
-        Method errorMethod = null;
-        Method defaultMethod = null;
+  public BaseCommand() {
+    Method errorMethod = null;
+    Method defaultMethod = null;
 
-        // Check if we have an error Method
-        for (Method method : getClass().getMethods()) {
-            if (errorMethod == null && method.getAnnotation(Error.class) != null) {
-                errorMethod = method;
-                continue;
-            }
+    // Check if we have an error Method
+    for (Method method : getClass().getMethods()) {
+      if (errorMethod == null && method.getAnnotation(Error.class) != null) {
+        errorMethod = method;
+        continue;
+      }
 
-            if (defaultMethod == null && method.getAnnotation(Default.class) != null) {
-                defaultMethod = method;
-            }
-        }
-
-        this.errorMethod = errorMethod;
-        this.defaultMethod = defaultMethod;
+      if (defaultMethod == null && method.getAnnotation(Default.class) != null) {
+        defaultMethod = method;
+      }
     }
 
-
+    this.errorMethod = errorMethod;
+    this.defaultMethod = defaultMethod;
+  }
 }

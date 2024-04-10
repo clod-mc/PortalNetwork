@@ -26,63 +26,64 @@ package au.com.grieve.bcf.parsers;
 import au.com.grieve.bcf.*;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.exceptions.ParserRequiredArgumentException;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 /**
  * Supports a single argument parser
  */
 @Getter
 public abstract class SingleParser extends Parser {
-    private String input;
+  private String input;
 
-    private List<Candidate> completions;
+  private List<Candidate> completions;
 
-    public SingleParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
+  public SingleParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
+
+  @Override
+  public void parse(List<String> input, boolean defaults) throws ParserRequiredArgumentException {
+    parsed = true;
+    if (input == null || input.size() == 0) {
+      // Check if a default is provided or if its not required
+      if (!defaults
+          || (getParameter("default") == null && getParameter("required", "true").equals("true"))) {
+        throw new ParserRequiredArgumentException(this);
+      }
+
+      this.input = getParameter("default");
+      return;
     }
 
-    @Override
-    public void parse(List<String> input, boolean defaults) throws ParserRequiredArgumentException {
-        parsed = true;
-        if (input == null || input.size() == 0) {
-            // Check if a default is provided or if its not required
-            if (!defaults || (getParameter("default") == null && getParameter("required", "true").equals("true"))) {
-                throw new ParserRequiredArgumentException(this);
-            }
+    this.input = input.remove(0);
+  }
 
-            this.input = getParameter("default");
-            return;
-        }
-
-        this.input = input.remove(0);
+  @Override
+  public List<Candidate> getCompletions() {
+    if (input == null) {
+      return new ArrayList<>();
     }
 
-    @Override
-    public List<Candidate> getCompletions() {
-        if (input == null) {
-            return new ArrayList<>();
-        }
-
-        if (completions == null) {
-            completions = complete().stream()
-                    .map(s -> new Candidate(s, s, getParameter("description"), String.valueOf(hashCode())))
-                    .collect(Collectors.toList());
-        }
-
-        return completions;
+    if (completions == null) {
+      completions =
+          complete().stream()
+              .map(
+                  s -> new Candidate(s, s, getParameter("description"), String.valueOf(hashCode())))
+              .collect(Collectors.toList());
     }
 
-    @Override
-    public Object getResult() throws ParserInvalidResultException {
-        if (input == null || input.isEmpty()) {
-            throw new ParserInvalidResultException(this, "Invalid command");
-        }
+    return completions;
+  }
 
-        return super.getResult();
+  @Override
+  public Object getResult() throws ParserInvalidResultException {
+    if (input == null || input.isEmpty()) {
+      throw new ParserInvalidResultException(this, "Invalid command");
     }
 
+    return super.getResult();
+  }
 }

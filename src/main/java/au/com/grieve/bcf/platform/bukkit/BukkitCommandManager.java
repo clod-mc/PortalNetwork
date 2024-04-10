@@ -27,77 +27,75 @@ import au.com.grieve.bcf.BaseCommand;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.annotations.Command;
 import au.com.grieve.bcf.platform.bukkit.parsers.PlayerParser;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-
 @SuppressWarnings("unused")
-public class BukkitCommandManager extends CommandManager<
-        BukkitCommand, BukkitCommandRoot
-        > {
+public class BukkitCommandManager extends CommandManager<BukkitCommand, BukkitCommandRoot> {
 
-    private final JavaPlugin plugin;
-    private final CommandMap commandMap;
+  private final JavaPlugin plugin;
+  private final CommandMap commandMap;
 
-    public BukkitCommandManager(JavaPlugin plugin) {
-        super();
-        this.plugin = plugin;
-        this.commandMap = hookCommandMap();
+  public BukkitCommandManager(JavaPlugin plugin) {
+    super();
+    this.plugin = plugin;
+    this.commandMap = hookCommandMap();
 
-        // Register Default Parsers
-        registerParser("player", PlayerParser.class);
+    // Register Default Parsers
+    registerParser("player", PlayerParser.class);
+  }
+
+  /**
+   * Hook into the Bukkit Command Map
+   */
+  private CommandMap hookCommandMap() {
+    CommandMap commandMap;
+    Server server = Bukkit.getServer();
+    Method getCommandMap;
+    try {
+      getCommandMap = server.getClass().getDeclaredMethod("getCommandMap");
+      getCommandMap.setAccessible(true);
+      commandMap = (CommandMap) getCommandMap.invoke(server);
+      Field knownCommands = SimpleCommandMap.class.getDeclaredField("knownCommands");
+      knownCommands.setAccessible(true);
+    } catch (NoSuchMethodException
+        | IllegalAccessException
+        | InvocationTargetException
+        | NoSuchFieldException e) {
+      throw new RuntimeException("Cannot Hook CommandMap", e);
     }
 
-    /**
-     * Hook into the Bukkit Command Map
-     */
-    private CommandMap hookCommandMap() {
-        CommandMap commandMap;
-        Server server = Bukkit.getServer();
-        Method getCommandMap;
-        try {
-            getCommandMap = server.getClass().getDeclaredMethod("getCommandMap");
-            getCommandMap.setAccessible(true);
-            commandMap = (CommandMap) getCommandMap.invoke(server);
-            Field knownCommands = SimpleCommandMap.class.getDeclaredField("knownCommands");
-            knownCommands.setAccessible(true);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
-            throw new RuntimeException("Cannot Hook CommandMap", e);
-        }
+    return commandMap;
+  }
 
-        return commandMap;
+  @Override
+  protected BukkitCommandRoot createCommandRoot(BaseCommand cmd) {
+    BukkitCommandRoot cr = new BukkitCommandRoot(this, cmd);
+
+    // Get Name and Aliases
+    Command commandAnnotation = cmd.getClass().getAnnotation(Command.class);
+
+    if (commandAnnotation == null) {
+      return cr;
     }
 
-    @Override
-    protected BukkitCommandRoot createCommandRoot(BaseCommand cmd) {
-        BukkitCommandRoot cr = new BukkitCommandRoot(this, cmd);
-
-        // Get Name and Aliases
-        Command commandAnnotation = cmd.getClass().getAnnotation(Command.class);
-
-        if (commandAnnotation == null) {
-            return cr;
-        }
-
-        String[] aliases = commandAnnotation.value().split("\\|");
-        if (aliases.length == 0) {
-            aliases = new String[]{cmd.getClass().getSimpleName().toLowerCase()};
-        }
-
-        // Register with Bukkit
-        BukkitCommandExecutor bukkitCommandExecutor = new BukkitCommandExecutor(cr, aliases[0]);
-        bukkitCommandExecutor.setAliases(Arrays.asList(aliases));
-        commandMap.register(aliases[0], plugin.getName().toLowerCase(), bukkitCommandExecutor);
-
-        return cr;
+    String[] aliases = commandAnnotation.value().split("\\|");
+    if (aliases.length == 0) {
+      aliases = new String[] {cmd.getClass().getSimpleName().toLowerCase()};
     }
 
+    // Register with Bukkit
+    BukkitCommandExecutor bukkitCommandExecutor = new BukkitCommandExecutor(cr, aliases[0]);
+    bukkitCommandExecutor.setAliases(Arrays.asList(aliases));
+    commandMap.register(aliases[0], plugin.getName().toLowerCase(), bukkitCommandExecutor);
 
+    return cr;
+  }
 }

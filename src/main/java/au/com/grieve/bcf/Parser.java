@@ -25,75 +25,81 @@ package au.com.grieve.bcf;
 
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.exceptions.ParserRequiredArgumentException;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 
 @Getter
 public abstract class Parser {
-    // Data
-    protected final CommandManager<?, ?> manager;
-    protected final CommandContext context;
-    protected final Map<String, String> defaultParameters = new HashMap<>();
+  // Data
+  protected final CommandManager<?, ?> manager;
+  protected final CommandContext context;
+  protected final Map<String, String> defaultParameters = new HashMap<>();
 
-    protected boolean parsed = false;
+  protected boolean parsed = false;
 
-    protected ArgNode argNode;
+  protected ArgNode argNode;
 
-    // Cache
-    protected Object result;
+  // Cache
+  protected Object result;
 
-    public Parser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        this.manager = manager;
-        this.context = context;
-        this.argNode = argNode;
+  public Parser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    this.manager = manager;
+    this.context = context;
+    this.argNode = argNode;
+  }
+
+  public abstract List<Candidate> getCompletions();
+
+  public Object getResult() throws ParserInvalidResultException {
+    if (result == null) {
+      result = result();
     }
 
-    public abstract List<Candidate> getCompletions();
+    return result;
+  }
 
-    public Object getResult() throws ParserInvalidResultException {
-        if (result == null) {
-            result = result();
-        }
+  @SuppressWarnings("unused")
+  public String getParameter(String key) {
+    return getParameter(key, null);
+  }
 
-        return result;
-    }
+  public String getParameter(String key, String def) {
+    return argNode.getParameters().getOrDefault(key, defaultParameters.getOrDefault(key, def));
+  }
 
-    @SuppressWarnings("unused")
-    public String getParameter(String key) {
-        return getParameter(key, null);
-    }
+  // default methods
 
-    public String getParameter(String key, String def) {
-        return argNode.getParameters().getOrDefault(key, defaultParameters.getOrDefault(key, def));
-    }
+  protected List<String> complete() {
+    return new ArrayList<>();
+  }
 
-    // default methods
+  // abstract methods
+  protected abstract Object result() throws ParserInvalidResultException;
 
-    protected List<String> complete() {
-        return new ArrayList<>();
-    }
+  /**
+   * Take input and return the unused data
+   */
+  public void parse(List<String> input, boolean defaults) throws ParserRequiredArgumentException {
+    parsed = true;
+  }
 
-    // abstract methods
-    protected abstract Object result() throws ParserInvalidResultException;
-
-    /**
-     * Take input and return the unused data
-     */
-    public void parse(List<String> input, boolean defaults) throws ParserRequiredArgumentException {
-        parsed = true;
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getName() + "(argNode=" + argNode + ", " +
-                "context=" + context + ", " +
-                "defaultParameters=" + defaultParameters + ", " +
-                "parsed=" + parsed + ")";
-    }
-
-
+  @Override
+  public String toString() {
+    return getClass().getName()
+        + "(argNode="
+        + argNode
+        + ", "
+        + "context="
+        + context
+        + ", "
+        + "defaultParameters="
+        + defaultParameters
+        + ", "
+        + "parsed="
+        + parsed
+        + ")";
+  }
 }

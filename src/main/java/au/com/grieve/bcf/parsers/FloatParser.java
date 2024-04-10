@@ -27,28 +27,27 @@ import au.com.grieve.bcf.ArgNode;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
-
 import java.util.List;
 
 public class FloatParser extends SingleParser {
 
-    public FloatParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
-    }
+  public FloatParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
 
-    @Override
-    protected List<String> complete() {
-        List<String> ret = super.complete();
-        ret.add("<float>");
-        return ret;
-    }
+  @Override
+  protected List<String> complete() {
+    List<String> ret = super.complete();
+    ret.add("<float>");
+    return ret;
+  }
 
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        try {
-            return Float.valueOf(getInput());
-        } catch (NumberFormatException e) {
-            throw new ParserInvalidResultException(this, "Not a valid float");
-        }
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    try {
+      return Float.valueOf(getInput());
+    } catch (NumberFormatException e) {
+      throw new ParserInvalidResultException(this, "Not a valid float");
     }
+  }
 }

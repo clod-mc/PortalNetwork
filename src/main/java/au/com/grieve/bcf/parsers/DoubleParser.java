@@ -27,29 +27,27 @@ import au.com.grieve.bcf.ArgNode;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
-
 import java.util.List;
 
 public class DoubleParser extends SingleParser {
 
-    public DoubleParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
-    }
+  public DoubleParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
 
-    @Override
-    protected List<String> complete() {
-        List<String> ret = super.complete();
-        ret.add("<double>");
-        return ret;
-    }
+  @Override
+  protected List<String> complete() {
+    List<String> ret = super.complete();
+    ret.add("<double>");
+    return ret;
+  }
 
-
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        try {
-            return Double.valueOf(getInput());
-        } catch (NumberFormatException e) {
-            throw new ParserInvalidResultException(this, "Not a valid double");
-        }
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    try {
+      return Double.valueOf(getInput());
+    } catch (NumberFormatException e) {
+      throw new ParserInvalidResultException(this, "Not a valid double");
     }
+  }
 }

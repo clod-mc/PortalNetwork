@@ -23,13 +23,11 @@
 
 package au.com.grieve.bcf.annotations;
 
-
 import java.lang.annotation.*;
 
 @Repeatable(Permissions.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface Permission {
-    String value();
+  String value();
 }
-

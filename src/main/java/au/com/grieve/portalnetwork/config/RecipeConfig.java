@@ -20,14 +20,13 @@ package au.com.grieve.portalnetwork.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.bukkit.Material;
-
-import java.util.List;
-import java.util.Map;
 
 @AllArgsConstructor
 @Getter
@@ -36,7 +35,8 @@ import java.util.Map;
 @NoArgsConstructor
 @ToString
 public class RecipeConfig {
-    private List<String> items;
-    @JsonDeserialize(contentUsing = Converter.MaterialDeserializer.class)
-    private Map<Character, Material> mapping;
+  private List<String> items;
+
+  @JsonDeserialize(contentUsing = Converter.MaterialDeserializer.class)
+  private Map<Character, Material> mapping;
 }

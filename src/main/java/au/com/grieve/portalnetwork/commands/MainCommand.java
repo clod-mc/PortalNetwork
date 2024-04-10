@@ -26,6 +26,7 @@ import au.com.grieve.bcf.platform.bukkit.BukkitCommand;
 import au.com.grieve.portalnetwork.PortalNetwork;
 import au.com.grieve.portalnetwork.exceptions.InvalidPortalException;
 import au.com.grieve.portalnetwork.portals.BasePortal;
+import java.io.IOException;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -35,9 +36,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.IOException;
-
-
 @Command("portalnetwork|pn")
 @Permission("portalnetwork.admin")
 @Permission("portalnetwork.command.reload")
@@ -45,122 +43,158 @@ import java.io.IOException;
 @Permission("portalnetwork.command.give")
 public class MainCommand extends BukkitCommand {
 
-    @Default
-    public void onDefault(CommandSender sender) {
-        sender.spigot().sendMessage(
-                new ComponentBuilder("========= [ PortalNetwork Help ] =========").color(ChatColor.AQUA).create()
-        );
+  @Default
+  public void onDefault(CommandSender sender) {
+    sender
+        .spigot()
+        .sendMessage(
+            new ComponentBuilder("========= [ PortalNetwork Help ] =========")
+                .color(ChatColor.AQUA)
+                .create());
 
-        sender.spigot().sendMessage(
-                new ComponentBuilder("/pn <command> help").color(ChatColor.DARK_AQUA)
-                        .append(" - Show help about command").color(ChatColor.GRAY).create()
-        );
+    sender
+        .spigot()
+        .sendMessage(
+            new ComponentBuilder("/pn <command> help")
+                .color(ChatColor.DARK_AQUA)
+                .append(" - Show help about command")
+                .color(ChatColor.GRAY)
+                .create());
 
-        // Show list of child commands
+    // Show list of child commands
+  }
+
+  @Arg("reload(description=Reload Plugin)")
+  @Permission("portalnetwork.admin")
+  @Permission("portalnetwork.command.reload")
+  public void onReload(CommandSender sender) {
+    // Read main config
+    try {
+      PortalNetwork.getInstance().reload();
+
+      sender
+          .spigot()
+          .sendMessage(
+              new ComponentBuilder("Reloaded PortalNetwork").color(ChatColor.YELLOW).create());
+    } catch (IOException e) {
+      sender
+          .spigot()
+          .sendMessage(
+              new ComponentBuilder("Failed to reload PortalNetwork").color(ChatColor.RED).create());
     }
+  }
 
-    @Arg("reload(description=Reload Plugin)")
-    @Permission("portalnetwork.admin")
-    @Permission("portalnetwork.command.reload")
-    public void onReload(CommandSender sender) {
-        // Read main config
-        try {
-            PortalNetwork.getInstance().reload();
+  @Arg("list(description=List placed portals)")
+  @Permission("portalnetwork.admin")
+  @Permission("portalnetwork.command.list")
+  public void onList(CommandSender sender) {
+    sender
+        .spigot()
+        .sendMessage(
+            new ComponentBuilder("========= [ List of Portals ] =========")
+                .color(ChatColor.AQUA)
+                .create());
 
-            sender.spigot().sendMessage(
-                    new ComponentBuilder("Reloaded PortalNetwork").color(ChatColor.YELLOW).create())
-            ;
-        } catch (IOException e) {
-            sender.spigot().sendMessage(
-                    new ComponentBuilder("Failed to reload PortalNetwork").color(ChatColor.RED).create()
-            );
+    for (BasePortal portal : PortalNetwork.getInstance().getPortalManager().getPortals()) {
+      if (portal.getLocation().getWorld() == null) {
+        continue;
+      }
+
+      String worldName = portal.getLocation().getWorld().getName();
+      switch (worldName) {
+        case "world":
+          worldName = "overworld";
+          break;
+        case "world_nether":
+          worldName = "nether";
+          break;
+        case "world_the_end":
+          worldName = "the_end";
+          break;
+      }
+
+      ComponentBuilder msg =
+          new ComponentBuilder(
+                  "["
+                      + portal.getLocation().getX()
+                      + ";"
+                      + portal.getLocation().getY()
+                      + ";"
+                      + portal.getLocation().getZ()
+                      + ";"
+                      + worldName
+                      + "] ")
+              .color(ChatColor.GREEN)
+              .event(
+                  new ClickEvent(
+                      ClickEvent.Action.RUN_COMMAND,
+                      "/execute in "
+                          + worldName
+                          + " run tp "
+                          + sender.getName()
+                          + " "
+                          + portal.getLocation().getX()
+                          + " "
+                          + (portal.getLocation().getY() + 1)
+                          + " "
+                          + portal.getLocation().getZ()))
+              .event(
+                  new HoverEvent(
+                      HoverEvent.Action.SHOW_TEXT,
+                      new Text(new ComponentBuilder("Teleport to Portal").create())))
+              .append("")
+              .event((HoverEvent) null)
+              .event((ClickEvent) null);
+
+      if (!portal.isValid()) {
+        msg.append("[invalid]").color(ChatColor.RED);
+      } else {
+        msg.append(portal.getNetwork() + ":" + portal.getAddress() + " ").color(ChatColor.YELLOW);
+        if (portal.getDialledPortal() == null) {
+          msg.append("[disconnected]").color(ChatColor.RED);
+        } else {
+          msg.append("connected:" + portal.getDialledPortal().getAddress());
         }
+      }
+
+      sender.spigot().sendMessage(msg.create());
     }
 
-    @Arg("list(description=List placed portals)")
-    @Permission("portalnetwork.admin")
-    @Permission("portalnetwork.command.list")
-    public void onList(CommandSender sender) {
-        sender.spigot().sendMessage(
-                new ComponentBuilder("========= [ List of Portals ] =========").color(ChatColor.AQUA).create()
-        );
+    sender
+        .spigot()
+        .sendMessage(
+            new ComponentBuilder("=====================================")
+                .color(ChatColor.AQUA)
+                .create());
+  }
 
-        for (BasePortal portal : PortalNetwork.getInstance().getPortalManager().getPortals()) {
-            if (portal.getLocation().getWorld() == null) {
-                continue;
-            }
+  @Arg(
+      "give|g(description=Give player a portal block) @portaltype(switch=type|t, default=NETHER)"
+          + " @player(required=true, default=%self, mode=online)")
+  @Permission("portalnetwork.admin")
+  @Permission("portalnetwork.command.give")
+  public void onGive(CommandSender sender, String portalType, Player player) {
+    ItemStack item;
 
-            String worldName = portal.getLocation().getWorld().getName();
-            switch (worldName) {
-                case "world":
-                    worldName = "overworld";
-                    break;
-                case "world_nether":
-                    worldName = "nether";
-                    break;
-                case "world_the_end":
-                    worldName = "the_end";
-                    break;
-            }
+    try {
+      item = PortalNetwork.getInstance().getPortalManager().createPortalBlock(portalType);
+      player.getInventory().addItem(item);
 
-            ComponentBuilder msg = new ComponentBuilder(
-                    "[" + portal.getLocation().getX() + ";" +
-                            portal.getLocation().getY() + ";" +
-                            portal.getLocation().getZ() + ";" +
-                            worldName + "] ").color(ChatColor.GREEN)
-                    .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                            "/execute in " + worldName + " run tp " + sender.getName() + " " +
-                                    portal.getLocation().getX() + " " +
-                                    (portal.getLocation().getY() + 1) + " " +
-                                    portal.getLocation().getZ()
-                    ))
-                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(new ComponentBuilder("Teleport to Portal").create())))
-                    .append("").event((HoverEvent) null).event((ClickEvent) null);
+      sender
+          .spigot()
+          .sendMessage(
+              new ComponentBuilder("Giving " + player.getName() + " a portal block.").create());
 
-            if (!portal.isValid()) {
-                msg.append("[invalid]").color(ChatColor.RED);
-            } else {
-                msg.append(portal.getNetwork() + ":" + portal.getAddress() + " ").color(ChatColor.YELLOW);
-                if (portal.getDialledPortal() == null) {
-                    msg.append("[disconnected]").color(ChatColor.RED);
-                } else {
-                    msg.append("connected:" + portal.getDialledPortal().getAddress());
-                }
-            }
-
-            sender.spigot().sendMessage(msg.create());
-        }
-
-        sender.spigot().sendMessage(
-                new ComponentBuilder("=====================================").color(ChatColor.AQUA).create()
-        );
+      if (!sender.equals(player)) {
+        player
+            .spigot()
+            .sendMessage(new ComponentBuilder("You have received a Portal Block.").create());
+      }
+    } catch (InvalidPortalException e) {
+      sender
+          .spigot()
+          .sendMessage(
+              new ComponentBuilder("Unable to create block.").color(ChatColor.RED).create());
     }
-
-    @Arg("give|g(description=Give player a portal block) @portaltype(switch=type|t, default=NETHER) @player(required=true, default=%self, mode=online)")
-    @Permission("portalnetwork.admin")
-    @Permission("portalnetwork.command.give")
-    public void onGive(CommandSender sender, String portalType, Player player) {
-        ItemStack item;
-
-        try {
-            item = PortalNetwork.getInstance().getPortalManager().createPortalBlock(portalType);
-            player.getInventory().addItem(item);
-
-            sender.spigot().sendMessage(
-                    new ComponentBuilder("Giving " + player.getName() + " a portal block.").create()
-            );
-
-            if (!sender.equals(player)) {
-                player.spigot().sendMessage(
-                        new ComponentBuilder("You have received a Portal Block.").create()
-                );
-            }
-        } catch (InvalidPortalException e) {
-            sender.spigot().sendMessage(
-                    new ComponentBuilder("Unable to create block.").color(ChatColor.RED).create()
-            );
-        }
-    }
-
-
+  }
 }

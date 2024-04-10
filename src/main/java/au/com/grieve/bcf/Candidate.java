@@ -29,20 +29,20 @@ import lombok.ToString;
 @Getter
 @ToString
 public class Candidate {
-    private final String value;
-    private final String title;
-    private final String description;
+  private final String value;
+  private final String title;
+  private final String description;
 
-    private final String key;
+  private final String key;
 
-    public Candidate(String value) {
-        this(value, value, null, null);
-    }
+  public Candidate(String value) {
+    this(value, value, null, null);
+  }
 
-    public Candidate(String value, String title, String description, String key) {
-        this.value = value;
-        this.title = title;
-        this.description = description;
-        this.key = key;
-    }
+  public Candidate(String value, String title, String description, String key) {
+    this.value = value;
+    this.title = title;
+    this.description = description;
+    this.key = key;
+  }
 }

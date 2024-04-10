@@ -29,34 +29,34 @@ import java.util.List;
 import java.util.Set;
 
 public class ReflectUtils {
-    /**
-     * Get all super classes
-     */
-    public static Class<?>[] getAllSuperClasses(Class<?> clz) {
-        List<Class<?>> list = new ArrayList<>();
-        while ((clz = clz.getSuperclass()) != null) {
-            list.add(clz);
-        }
-        return list.toArray(new Class<?>[0]);
+  /**
+   * Get all super classes
+   */
+  public static Class<?>[] getAllSuperClasses(Class<?> clz) {
+    List<Class<?>> list = new ArrayList<>();
+    while ((clz = clz.getSuperclass()) != null) {
+      list.add(clz);
     }
+    return list.toArray(new Class<?>[0]);
+  }
 
-    /**
-     * Get all interfaces
-     */
-    public static Class<?>[] getAllInterfaces(Class<?> clz) {
-        Set<Class<?>> set = new HashSet<>();
-        getAllInterfaces(clz, set);
-        return set.toArray(new Class<?>[0]);
-    }
+  /**
+   * Get all interfaces
+   */
+  public static Class<?>[] getAllInterfaces(Class<?> clz) {
+    Set<Class<?>> set = new HashSet<>();
+    getAllInterfaces(clz, set);
+    return set.toArray(new Class<?>[0]);
+  }
 
-    private static void getAllInterfaces(Class<?> clz, Set<Class<?>> visited) {
-        if (clz.getSuperclass() != null) {
-            getAllInterfaces(clz.getSuperclass(), visited);
-        }
-        for (Class<?> c : clz.getInterfaces()) {
-            if (visited.add(c)) {
-                getAllInterfaces(c, visited);
-            }
-        }
+  private static void getAllInterfaces(Class<?> clz, Set<Class<?>> visited) {
+    if (clz.getSuperclass() != null) {
+      getAllInterfaces(clz.getSuperclass(), visited);
     }
+    for (Class<?> c : clz.getInterfaces()) {
+      if (visited.add(c)) {
+        getAllInterfaces(c, visited);
+      }
+    }
+  }
 }

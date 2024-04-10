@@ -33,7 +33,8 @@ import org.bukkit.Material;
 @SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
 @ToString
 public class ItemConfig {
-    @JsonDeserialize(using = Converter.MaterialDeserializer.class)
-    private Material block = Material.GOLD_BLOCK;
-    private String name = "Portal Block";
+  @JsonDeserialize(using = Converter.MaterialDeserializer.class)
+  private Material block = Material.GOLD_BLOCK;
+
+  private String name = "Portal Block";
 }

@@ -23,38 +23,36 @@
 
 package au.com.grieve.bcf;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class CommandContext {
-    private final List<Parser> switches = new ArrayList<>();
-    private final List<Parser> parsers = new ArrayList<>();
-    private final Stack<BaseCommand> commandStack = new Stack<>();
+  private final List<Parser> switches = new ArrayList<>();
+  private final List<Parser> parsers = new ArrayList<>();
+  private final Stack<BaseCommand> commandStack = new Stack<>();
 
-    @Setter
-    private Parser currentParser;
+  @Setter private Parser currentParser;
 
-    public CommandContext() {
-    }
+  public CommandContext() {}
 
-    public CommandContext(CommandContext original) {
-        switches.addAll(original.getSwitches());
-        parsers.addAll(original.getParsers());
-        commandStack.addAll(original.getCommandStack());
-        currentParser = original.getCurrentParser();
-    }
+  public CommandContext(CommandContext original) {
+    switches.addAll(original.getSwitches());
+    parsers.addAll(original.getParsers());
+    commandStack.addAll(original.getCommandStack());
+    currentParser = original.getCurrentParser();
+  }
 
-    public CommandContext copy() {
-        return new CommandContext(this);
-//        try {
-//            return getClass().getConstructor(CommandContext.class).newInstance(this);
-//        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-//            throw new RuntimeException(e);
-//        }
-    }
+  public CommandContext copy() {
+    return new CommandContext(this);
+    //        try {
+    //            return getClass().getConstructor(CommandContext.class).newInstance(this);
+    //        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+    // IllegalAccessException e) {
+    //            throw new RuntimeException(e);
+    //        }
+  }
 }

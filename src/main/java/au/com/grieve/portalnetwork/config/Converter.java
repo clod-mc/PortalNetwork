@@ -21,33 +21,32 @@ package au.com.grieve.portalnetwork.config;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import java.io.IOException;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-import java.io.IOException;
-
 public class Converter {
-    public static class MaterialDeserializer extends JsonDeserializer<Material> {
+  public static class MaterialDeserializer extends JsonDeserializer<Material> {
 
-        @Override
-        public Material deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            Material result = Material.getMaterial(p.getValueAsString());
-            if (result == null) {
-                throw new IllegalArgumentException("Invalid material: " + p.getValueAsString());
-            }
-            return result;
-        }
+    @Override
+    public Material deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      Material result = Material.getMaterial(p.getValueAsString());
+      if (result == null) {
+        throw new IllegalArgumentException("Invalid material: " + p.getValueAsString());
+      }
+      return result;
     }
+  }
 
-    public static class SoundDeserializer extends JsonDeserializer<Sound> {
+  public static class SoundDeserializer extends JsonDeserializer<Sound> {
 
-        @Override
-        public Sound deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            try {
-                return Sound.valueOf(p.getValueAsString());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid sound: " + p.getValueAsString());
-            }
-        }
+    @Override
+    public Sound deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      try {
+        return Sound.valueOf(p.getValueAsString());
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid sound: " + p.getValueAsString());
+      }
     }
+  }
 }

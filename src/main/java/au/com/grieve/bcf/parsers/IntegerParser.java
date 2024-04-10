@@ -27,70 +27,69 @@ import au.com.grieve.bcf.ArgNode;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IntegerParser extends SingleParser {
 
-    public IntegerParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
+  public IntegerParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
+
+  @Override
+  protected List<String> complete() {
+    if (getParameter("max") != null) {
+      int min;
+      int max;
+
+      try {
+        max = Integer.parseInt(getParameter("max"));
+      } catch (NumberFormatException e) {
+        return super.complete();
+      }
+
+      try {
+        min = Integer.parseInt(getParameter("min", "0"));
+      } catch (NumberFormatException e) {
+        min = 0;
+      }
+
+      return IntStream.rangeClosed(min, max)
+          .mapToObj(String::valueOf)
+          .filter(s -> s.startsWith(getInput()))
+          .limit(20)
+          .collect(Collectors.toList());
     }
 
-    @Override
-    protected List<String> complete() {
-        if (getParameter("max") != null) {
-            int min;
-            int max;
+    List<String> ret = super.complete();
+    ret.add("<int>");
+    return ret;
+  }
 
-            try {
-                max = Integer.parseInt(getParameter("max"));
-            } catch (NumberFormatException e) {
-                return super.complete();
-            }
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    int result;
 
-            try {
-                min = Integer.parseInt(getParameter("min", "0"));
-            } catch (NumberFormatException e) {
-                min = 0;
-            }
+    try {
+      result = Integer.parseInt(getInput());
 
-            return IntStream.rangeClosed(min, max)
-                    .mapToObj(String::valueOf)
-                    .filter(s -> s.startsWith(getInput()))
-                    .limit(20)
-                    .collect(Collectors.toList());
+      if (getParameter("min") != null) {
+        if (result < Integer.parseInt(getParameter("min"))) {
+          throw new ParserInvalidResultException(this);
         }
+      }
 
-        List<String> ret = super.complete();
-        ret.add("<int>");
-        return ret;
-    }
-
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        int result;
-
-        try {
-            result = Integer.parseInt(getInput());
-
-            if (getParameter("min") != null) {
-                if (result < Integer.parseInt(getParameter("min"))) {
-                    throw new ParserInvalidResultException(this);
-                }
-            }
-
-            if (getParameter("max") != null) {
-                if (result > Integer.parseInt(getParameter("max"))) {
-                    throw new ParserInvalidResultException(this);
-                }
-            }
-
-        } catch (NumberFormatException e) {
-            throw new ParserInvalidResultException(this, "Not a valid integer");
+      if (getParameter("max") != null) {
+        if (result > Integer.parseInt(getParameter("max"))) {
+          throw new ParserInvalidResultException(this);
         }
+      }
 
-        return result;
+    } catch (NumberFormatException e) {
+      throw new ParserInvalidResultException(this, "Not a valid integer");
     }
+
+    return result;
+  }
 }

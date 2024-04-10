@@ -20,69 +20,67 @@ package au.com.grieve.portalnetwork.portals;
 
 import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.config.PortalConfig;
+import java.util.Iterator;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.util.BlockVector;
 
-import java.util.Iterator;
-
 public class Hidden extends BasePortal {
 
-    public Hidden(PortalManager manager, Location location, PortalConfig config) {
-        super(manager, location, config);
+  public Hidden(PortalManager manager, Location location, PortalConfig config) {
+    super(manager, location, config);
+  }
+
+  /**
+   * Activate Portal using type of portal as to what is seen/heard
+   */
+  @Override
+  public void activate() {
+    if (!valid || dialledPortal == null || location.getWorld() == null) {
+      return;
     }
 
-    /**
-     * Activate Portal using type of portal as to what is seen/heard
-     */
-    @Override
-    public void activate() {
-        if (!valid || dialledPortal == null || location.getWorld() == null) {
-            return;
-        }
+    updateBlock();
 
-        updateBlock();
+    // Draw frame
+    for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
+      BlockVector loc = it.next();
+      Block block = loc.toLocation(location.getWorld()).getBlock();
+      if (block.getType() != Material.AIR && !GLASS_MAPPINGS.contains(block.getType())) {
+        continue;
+      }
 
-        // Draw frame
-        for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
-            BlockVector loc = it.next();
-            Block block = loc.toLocation(location.getWorld()).getBlock();
-            if (block.getType() != Material.AIR && !GLASS_MAPPINGS.contains(block.getType())) {
-                continue;
-            }
-
-            block.setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
-        }
-
-        // Play portal sound
-        location.getWorld().playSound(location, config.getSound().getStart(), 1f, 1);
+      block.setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
     }
 
-    /**
-     * Deactivate Portal
-     */
-    @Override
-    public void deactivate() {
-        if (location.getWorld() == null) {
-            return;
-        }
+    // Play portal sound
+    location.getWorld().playSound(location, config.getSound().getStart(), 1f, 1);
+  }
 
-        // Remove frame
-        for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
-            BlockVector loc = it.next();
-            Block block = loc.toLocation(location.getWorld()).getBlock();
-            if (!GLASS_MAPPINGS.contains(block.getType())) {
-                continue;
-            }
-
-            block.setType(Material.AIR);
-        }
-
-        updateBlock();
-
-        // Play portal sound
-        location.getWorld().playSound(location, config.getSound().getStop(), 1f, 1);
+  /**
+   * Deactivate Portal
+   */
+  @Override
+  public void deactivate() {
+    if (location.getWorld() == null) {
+      return;
     }
 
+    // Remove frame
+    for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
+      BlockVector loc = it.next();
+      Block block = loc.toLocation(location.getWorld()).getBlock();
+      if (!GLASS_MAPPINGS.contains(block.getType())) {
+        continue;
+      }
+
+      block.setType(Material.AIR);
+    }
+
+    updateBlock();
+
+    // Play portal sound
+    location.getWorld().playSound(location, config.getSound().getStop(), 1f, 1);
+  }
 }

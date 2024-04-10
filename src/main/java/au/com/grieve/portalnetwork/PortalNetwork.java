@@ -26,12 +26,6 @@ import au.com.grieve.portalnetwork.parsers.PortalTypeParser;
 import au.com.grieve.portalnetwork.portals.End;
 import au.com.grieve.portalnetwork.portals.Hidden;
 import au.com.grieve.portalnetwork.portals.Nether;
-import lombok.Getter;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,123 +34,128 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Getter;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 @Getter
 public final class PortalNetwork extends JavaPlugin {
-    @Getter
-    private static PortalNetwork instance;
+  @Getter private static PortalNetwork instance;
 
-    private final File configFile = new File(getDataFolder(), "config.yml");
-    private BukkitCommandManager bcf;
-    private PortalManager portalManager;
-    private Config configuration;
+  private final File configFile = new File(getDataFolder(), "config.yml");
+  private BukkitCommandManager bcf;
+  private PortalManager portalManager;
+  private Config configuration;
 
-    public PortalNetwork() {
-        instance = this;
+  public PortalNetwork() {
+    instance = this;
+  }
+
+  @Override
+  public void onEnable() {
+    // Setup Command Manager
+    bcf = new BukkitCommandManager(this);
+    bcf.registerParser("portaltype", PortalTypeParser.class);
+
+    // Register Commands
+    bcf.registerCommand(new MainCommand());
+
+    // Initialize Configs
+    try {
+      initConfig();
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to load/save configuration file", e);
     }
 
-    @Override
-    public void onEnable() {
-        // Setup Command Manager
-        bcf = new BukkitCommandManager(this);
-        bcf.registerParser("portaltype", PortalTypeParser.class);
-
-        // Register Commands
-        bcf.registerCommand(new MainCommand());
-
-        // Initialize Configs
-        try {
-            initConfig();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to load/save configuration file", e);
-        }
-
-        // Load Portal Manager
-        portalManager = new PortalManager(this);
-        portalManager.registerPortalClass("nether", Nether.class, configuration.getPortal().getOrDefault("nether",
+    // Load Portal Manager
+    portalManager = new PortalManager(this);
+    portalManager.registerPortalClass(
+        "nether",
+        Nether.class,
+        configuration
+            .getPortal()
+            .getOrDefault(
+                "nether",
                 new PortalConfig(
-                        new ItemConfig(Material.GOLD_BLOCK, "Portal Block (nether)"),
-                        new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-                        new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-                        new RecipeConfig(Stream.of(new String[]{
-                                "OOP",
-                                "ONO",
-                                "OOO"
-                        }).collect(Collectors.toList()),
-                                Map.of(
-                                        'N', Material.NETHERITE_INGOT,
-                                        'O', Material.OBSIDIAN,
-                                        'P', Material.ENDER_PEARL
-                                )
-                        ))));
-        portalManager.registerPortalClass("end", End.class, configuration.getPortal().getOrDefault("end",
+                    new ItemConfig(Material.GOLD_BLOCK, "Portal Block (nether)"),
+                    new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+                    new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+                    new RecipeConfig(
+                        Stream.of(new String[] {"OOP", "ONO", "OOO"}).collect(Collectors.toList()),
+                        Map.of(
+                            'N', Material.NETHERITE_INGOT,
+                            'O', Material.OBSIDIAN,
+                            'P', Material.ENDER_PEARL)))));
+    portalManager.registerPortalClass(
+        "end",
+        End.class,
+        configuration
+            .getPortal()
+            .getOrDefault(
+                "end",
                 new PortalConfig(
-                        new ItemConfig(Material.GOLD_BLOCK, "Portal Block (end)"),
-                        new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-                        new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-                        new RecipeConfig(Stream.of(new String[]{
-                                "EEP",
-                                "ENE",
-                                "EEE"
-                        }).collect(Collectors.toList()),
-                                Map.of(
-                                        'N', Material.NETHERITE_INGOT,
-                                        'E', Material.END_STONE,
-                                        'P', Material.ENDER_PEARL
-                                )
-                        ))));
-        portalManager.registerPortalClass("hidden", Hidden.class, configuration.getPortal().getOrDefault("hidden",
+                    new ItemConfig(Material.GOLD_BLOCK, "Portal Block (end)"),
+                    new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+                    new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+                    new RecipeConfig(
+                        Stream.of(new String[] {"EEP", "ENE", "EEE"}).collect(Collectors.toList()),
+                        Map.of(
+                            'N', Material.NETHERITE_INGOT,
+                            'E', Material.END_STONE,
+                            'P', Material.ENDER_PEARL)))));
+    portalManager.registerPortalClass(
+        "hidden",
+        Hidden.class,
+        configuration
+            .getPortal()
+            .getOrDefault(
+                "hidden",
                 new PortalConfig(
-                        new ItemConfig(Material.GOLD_BLOCK, "Portal Block (hidden)"),
-                        new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-                        new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-                        new RecipeConfig(Stream.of(new String[]{
-                                "OOP",
-                                "ONO",
-                                "OOO"
-                        }).collect(Collectors.toList()),
-                                Map.of(
-                                        'N', Material.NETHERITE_BLOCK,
-                                        'O', Material.OBSIDIAN,
-                                        'P', Material.ENDER_PEARL
-                                )
-                        ))));
+                    new ItemConfig(Material.GOLD_BLOCK, "Portal Block (hidden)"),
+                    new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+                    new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+                    new RecipeConfig(
+                        Stream.of(new String[] {"OOP", "ONO", "OOO"}).collect(Collectors.toList()),
+                        Map.of(
+                            'N', Material.NETHERITE_BLOCK,
+                            'O', Material.OBSIDIAN,
+                            'P', Material.ENDER_PEARL)))));
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                portalManager.load();
+    new BukkitRunnable() {
+      @Override
+      public void run() {
+        portalManager.load();
 
-                // Register Listeners
-                getServer().getPluginManager().registerEvents(new PortalEvents(), PortalNetwork.this);
-            }
-        }.runTaskLater(PortalNetwork.getInstance(), 5);
+        // Register Listeners
+        getServer().getPluginManager().registerEvents(new PortalEvents(), PortalNetwork.this);
+      }
+    }.runTaskLater(PortalNetwork.getInstance(), 5);
+  }
+
+  @Override
+  public void onDisable() {
+    // Plugin shutdown logic
+    if (portalManager != null) portalManager.clear();
+  }
+
+  private void initConfig() throws IOException {
+    // Main Config
+    if (!configFile.exists()) {
+      //noinspection ResultOfMethodCallIgnored
+      getDataFolder().mkdir();
+
+      try (InputStream in = getClassLoader().getResourceAsStream("config.yml")) {
+        //noinspection ConstantConditions
+        Files.copy(in, configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
     }
 
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-        if (portalManager != null)
-            portalManager.clear();
-    }
+    reload();
+  }
 
-    private void initConfig() throws IOException {
-        // Main Config
-        if (!configFile.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            getDataFolder().mkdir();
-
-            try (InputStream in = getClassLoader().getResourceAsStream("config.yml")) {
-                //noinspection ConstantConditions
-                Files.copy(in, configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-
-        reload();
-    }
-
-    public void reload() throws IOException {
-        this.configuration = Config.load(this.configFile);
-    }
-
+  public void reload() throws IOException {
+    this.configuration = Config.load(this.configFile);
+  }
 }

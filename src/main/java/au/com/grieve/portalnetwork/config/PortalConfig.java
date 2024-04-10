@@ -32,9 +32,8 @@ import lombok.ToString;
 @ToString
 public class PortalConfig {
 
-    private ItemConfig item;
-    private BlockConfig block;
-    private SoundConfig sound;
-    private RecipeConfig recipe = null;
-
+  private ItemConfig item;
+  private BlockConfig block;
+  private SoundConfig sound;
+  private RecipeConfig recipe = null;
 }

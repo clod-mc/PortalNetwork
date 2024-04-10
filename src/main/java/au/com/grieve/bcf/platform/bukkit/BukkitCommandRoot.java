@@ -28,103 +28,105 @@ import au.com.grieve.bcf.Candidate;
 import au.com.grieve.bcf.CommandExecute;
 import au.com.grieve.bcf.CommandRoot;
 import au.com.grieve.bcf.annotations.Permission;
-import org.bukkit.command.CommandSender;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.bukkit.command.CommandSender;
 
 public class BukkitCommandRoot extends CommandRoot {
-    public BukkitCommandRoot(BukkitCommandManager manager, BaseCommand cmd) {
-        super(manager, cmd);
-    }
+  public BukkitCommandRoot(BukkitCommandManager manager, BaseCommand cmd) {
+    super(manager, cmd);
+  }
 
-    /**
-     * Retrieve List of permissions
-     */
-    public String[] getPermissions(BaseCommand command) {
-        return Arrays.stream(command.getClass().getAnnotationsByType(Permission.class))
-                .map(Permission::value)
-                .toArray(String[]::new);
-    }
+  /**
+   * Retrieve List of permissions
+   */
+  public String[] getPermissions(BaseCommand command) {
+    return Arrays.stream(command.getClass().getAnnotationsByType(Permission.class))
+        .map(Permission::value)
+        .toArray(String[]::new);
+  }
 
-    public String[] getPermissions() {
-        return getPermissions(getCommand());
-    }
+  public String[] getPermissions() {
+    return getPermissions(getCommand());
+  }
 
-    /**
-     * Return true if class permits permission of sender
-     */
-    public boolean testPermission(BaseCommand command, CommandSender sender, boolean unknown) {
-        String[] permissions = getPermissions(command);
+  /**
+   * Return true if class permits permission of sender
+   */
+  public boolean testPermission(BaseCommand command, CommandSender sender, boolean unknown) {
+    String[] permissions = getPermissions(command);
 
-        if (permissions.length > 0) {
-            // Check Sender has any permissions
-            for (String permission : getPermissions(command)) {
-                if (sender.hasPermission(permission)) {
-                    return true;
-                }
-            }
-        } else {
-            return unknown;
+    if (permissions.length > 0) {
+      // Check Sender has any permissions
+      for (String permission : getPermissions(command)) {
+        if (sender.hasPermission(permission)) {
+          return true;
         }
-
-        return false;
+      }
+    } else {
+      return unknown;
     }
 
-    @SuppressWarnings("unused")
-    public CommandExecute execute(BaseCommand command, List<String> input, BukkitCommandContext context) {
-        if (testPermission(command, context.getSender(), true)) {
-            return super.execute(command, input, context);
+    return false;
+  }
+
+  @SuppressWarnings("unused")
+  public CommandExecute execute(
+      BaseCommand command, List<String> input, BukkitCommandContext context) {
+    if (testPermission(command, context.getSender(), true)) {
+      return super.execute(command, input, context);
+    }
+
+    return null;
+  }
+
+  @SuppressWarnings("unused")
+  protected CommandExecute executeMethod(
+      Method method, BaseCommand command, List<String> input, BukkitCommandContext context) {
+    Permission[] permissions = method.getAnnotationsByType(Permission.class);
+
+    if (permissions.length > 0) {
+      // Check Sender has any permissions
+      for (Permission permission : permissions) {
+        if (context.getSender().hasPermission(permission.value())) {
+          return super.executeMethod(method, command, input, context);
         }
+      }
 
-        return null;
+      return null;
     }
 
-    @SuppressWarnings("unused")
-    protected CommandExecute executeMethod(Method method, BaseCommand command, List<String> input, BukkitCommandContext context) {
-        Permission[] permissions = method.getAnnotationsByType(Permission.class);
+    return super.executeMethod(method, command, input, context);
+  }
 
-        if (permissions.length > 0) {
-            // Check Sender has any permissions
-            for (Permission permission : permissions) {
-                if (context.getSender().hasPermission(permission.value())) {
-                    return super.executeMethod(method, command, input, context);
-                }
-            }
+  @SuppressWarnings("unused")
+  public List<Candidate> complete(
+      BaseCommand command, List<String> input, BukkitCommandContext context) {
+    if (testPermission(command, context.getSender(), true)) {
+      return super.complete(command, input, context);
+    }
 
-            return null;
+    return new ArrayList<>();
+  }
+
+  @SuppressWarnings("unused")
+  protected List<Candidate> completeMethod(
+      Method method, BaseCommand command, List<String> input, BukkitCommandContext context) {
+    Permission[] permissions = method.getAnnotationsByType(Permission.class);
+
+    if (permissions.length > 0) {
+      // Check Sender has any permissions
+      for (Permission permission : permissions) {
+        if (context.getSender().hasPermission(permission.value())) {
+          return super.completeMethod(method, command, input, context);
         }
+      }
 
-        return super.executeMethod(method, command, input, context);
-
+      return new ArrayList<>();
     }
 
-    @SuppressWarnings("unused")
-    public List<Candidate> complete(BaseCommand command, List<String> input, BukkitCommandContext context) {
-        if (testPermission(command, context.getSender(), true)) {
-            return super.complete(command, input, context);
-        }
-
-        return new ArrayList<>();
-    }
-
-    @SuppressWarnings("unused")
-    protected List<Candidate> completeMethod(Method method, BaseCommand command, List<String> input, BukkitCommandContext context) {
-        Permission[] permissions = method.getAnnotationsByType(Permission.class);
-
-        if (permissions.length > 0) {
-            // Check Sender has any permissions
-            for (Permission permission : permissions) {
-                if (context.getSender().hasPermission(permission.value())) {
-                    return super.completeMethod(method, command, input, context);
-                }
-            }
-
-            return new ArrayList<>();
-        }
-
-        return super.completeMethod(method, command, input, context);
-    }
+    return super.completeMethod(method, command, input, context);
+  }
 }

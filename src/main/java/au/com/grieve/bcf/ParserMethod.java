@@ -23,31 +23,29 @@
 
 package au.com.grieve.bcf;
 
-
-import lombok.Getter;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import lombok.Getter;
 
 public class ParserMethod {
-    @Getter
-    private final BaseCommand command;
-    @Getter
-    private final Method method;
+  @Getter private final BaseCommand command;
+  @Getter private final Method method;
 
-    public ParserMethod(BaseCommand command, Method method) {
-        this.command = command;
-        this.method = method;
-    }
+  public ParserMethod(BaseCommand command, Method method) {
+    this.command = command;
+    this.method = method;
+  }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public Object invoke(List<Object> args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return invoke(args.toArray());
-    }
+  @SuppressWarnings("UnusedReturnValue")
+  public Object invoke(List<Object> args)
+      throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    return invoke(args.toArray());
+  }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public Object invoke(Object... args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return method.invoke(command, args);
-    }
+  @SuppressWarnings("UnusedReturnValue")
+  public Object invoke(Object... args)
+      throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    return method.invoke(command, args);
+  }
 }

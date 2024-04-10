@@ -24,7 +24,6 @@ import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.parsers.SingleParser;
 import au.com.grieve.portalnetwork.PortalNetwork;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,23 +32,26 @@ import java.util.stream.Collectors;
  */
 public class PortalTypeParser extends SingleParser {
 
-    public PortalTypeParser(CommandManager manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
-    }
+  public PortalTypeParser(CommandManager manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
 
-    @Override
-    protected String result() throws ParserInvalidResultException {
-        if (PortalNetwork.getInstance().getPortalManager().getPortalClasses().containsKey(getInput().toLowerCase())) {
-            return getInput().toLowerCase();
-        }
-        throw new ParserInvalidResultException(this, "Invalid Portal Type: " + getInput());
+  @Override
+  protected String result() throws ParserInvalidResultException {
+    if (PortalNetwork.getInstance()
+        .getPortalManager()
+        .getPortalClasses()
+        .containsKey(getInput().toLowerCase())) {
+      return getInput().toLowerCase();
     }
+    throw new ParserInvalidResultException(this, "Invalid Portal Type: " + getInput());
+  }
 
-    @Override
-    protected List<String> complete() {
-        return PortalNetwork.getInstance().getPortalManager().getPortalClasses().keySet().stream()
-                .filter(p -> p.startsWith(getInput().toLowerCase()))
-                .limit(20)
-                .collect(Collectors.toList());
-    }
+  @Override
+  protected List<String> complete() {
+    return PortalNetwork.getInstance().getPortalManager().getPortalClasses().keySet().stream()
+        .filter(p -> p.startsWith(getInput().toLowerCase()))
+        .limit(20)
+        .collect(Collectors.toList());
+  }
 }

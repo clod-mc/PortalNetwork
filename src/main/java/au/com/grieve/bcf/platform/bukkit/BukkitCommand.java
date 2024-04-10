@@ -32,22 +32,19 @@ import org.bukkit.command.CommandSender;
 
 public class BukkitCommand extends BaseCommand {
 
-    // Default Error
-    @SuppressWarnings("unused")
-    @Error
-    void onError(CommandSender sender, String message) {
-        sender.spigot().sendMessage(
-                new ComponentBuilder(message).color(ChatColor.RED).create()
-        );
-    }
+  // Default Error
+  @SuppressWarnings("unused")
+  @Error
+  void onError(CommandSender sender, String message) {
+    sender.spigot().sendMessage(new ComponentBuilder(message).color(ChatColor.RED).create());
+  }
 
-    // Default Default
-    @SuppressWarnings("unused")
-    @Default
-    void onDefault(CommandSender sender) {
-        sender.spigot().sendMessage(
-                new ComponentBuilder("Invalid Command").color(ChatColor.RED).create()
-        );
-    }
-
+  // Default Default
+  @SuppressWarnings("unused")
+  @Default
+  void onDefault(CommandSender sender) {
+    sender
+        .spigot()
+        .sendMessage(new ComponentBuilder("Invalid Command").color(ChatColor.RED).create());
+  }
 }

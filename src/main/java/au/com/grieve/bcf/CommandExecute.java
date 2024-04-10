@@ -23,74 +23,80 @@
 
 package au.com.grieve.bcf;
 
-import lombok.Getter;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 public class CommandExecute {
-    @Getter
-    private final Method method;
+  @Getter private final Method method;
 
-    @Getter
-    private final BaseCommand command;
+  @Getter private final BaseCommand command;
 
-    @Getter
-    private final List<Object> parameters = new ArrayList<>();
+  @Getter private final List<Object> parameters = new ArrayList<>();
 
-    @Getter
-    private final CommandContext context;
+  @Getter private final CommandContext context;
 
-    public CommandExecute(BaseCommand command, Method method, List<Object> parameters, CommandContext context) {
-        this.command = command;
-        this.method = method;
-        if (parameters != null) {
-            this.parameters.addAll(parameters);
-        }
-        this.context = context;
+  public CommandExecute(
+      BaseCommand command, Method method, List<Object> parameters, CommandContext context) {
+    this.command = command;
+    this.method = method;
+    if (parameters != null) {
+      this.parameters.addAll(parameters);
+    }
+    this.context = context;
+  }
+
+  public CommandExecute(BaseCommand command, Method method, CommandContext context) {
+    this(command, method, null, context);
+  }
+
+  /**
+   * Execute method, prepending args and filling missing parameters with null
+   */
+  public Object invoke(Object... args) {
+    List<Object> param = new ArrayList<>(Arrays.asList(args));
+    param.addAll(parameters);
+
+    // Fill out extra parameters with null
+    while (param.size() < method.getParameterCount()) {
+      param.add(null);
     }
 
-    public CommandExecute(BaseCommand command, Method method, CommandContext context) {
-        this(command, method, null, context);
+    try {
+      return method.invoke(command, param.toArray());
+    } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+      System.err.println(
+          "Error executing Command: "
+              + command.getClass().getName()
+              + "."
+              + method.getName()
+              + "("
+              + Arrays.stream(method.getParameterTypes())
+                  .map(Class::getName)
+                  .collect(Collectors.joining(", "))
+              + ")"
+              + " called with ("
+              + param.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", "))
+              + ")");
+
+      e.printStackTrace();
     }
+    return null;
+  }
 
-    /**
-     * Execute method, prepending args and filling missing parameters with null
-     */
-    public Object invoke(Object... args) {
-        List<Object> param = new ArrayList<>(Arrays.asList(args));
-        param.addAll(parameters);
-
-        // Fill out extra parameters with null
-        while (param.size() < method.getParameterCount()) {
-            param.add(null);
-        }
-
-        try {
-            return method.invoke(command, param.toArray());
-        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            System.err.println(
-                    "Error executing Command: " +
-                            command.getClass().getName() + "." + method.getName() +
-                            "(" + Arrays.stream(method.getParameterTypes()).map(Class::getName).collect(Collectors.joining(", ")) + ")" +
-                            " called with (" + param.stream().map(c -> c.getClass().getName()).collect(Collectors.joining(", ")) + ")");
-
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getName() + "(command=" + command +
-                ", method=" + method +
-                ", parameters=" + parameters +
-                ")";
-
-
-    }
+  @Override
+  public String toString() {
+    return getClass().getName()
+        + "(command="
+        + command
+        + ", method="
+        + method
+        + ", parameters="
+        + parameters
+        + ")";
+  }
 }

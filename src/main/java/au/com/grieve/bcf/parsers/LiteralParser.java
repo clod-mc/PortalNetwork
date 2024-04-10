@@ -28,7 +28,6 @@ import au.com.grieve.bcf.BaseCommand;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,39 +42,39 @@ import java.util.List;
  */
 public class LiteralParser extends SingleParser {
 
+  public LiteralParser(
+      CommandManager<BaseCommand, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+    defaultParameters.put("suppress", "true");
+  }
 
-    public LiteralParser(CommandManager<BaseCommand, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
-        defaultParameters.put("suppress", "true");
+  @Override
+  protected List<String> complete() {
+    List<String> result = new ArrayList<>();
+
+    for (String alias : argNode.getName().split("\\|")) {
+      if (alias.equals("*")) {
+        result.add(getInput());
+      } else if (alias.toLowerCase().startsWith(getInput().toLowerCase())) {
+        result.add(alias);
+      }
     }
 
-    @Override
-    protected List<String> complete() {
-        List<String> result = new ArrayList<>();
+    return result;
+  }
 
-        for (String alias : argNode.getName().split("\\|")) {
-            if (alias.equals("*")) {
-                result.add(getInput());
-            } else if (alias.toLowerCase().startsWith(getInput().toLowerCase())) {
-                result.add(alias);
-            }
-        }
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    for (String alias : argNode.getName().split("\\|")) {
+      if (alias.equals("*")) {
+        return getInput();
+      }
 
-        return result;
+      if (alias.equalsIgnoreCase(getInput())) {
+        return alias;
+      }
     }
 
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        for (String alias : argNode.getName().split("\\|")) {
-            if (alias.equals("*")) {
-                return getInput();
-            }
-
-            if (alias.equalsIgnoreCase(getInput())) {
-                return alias;
-            }
-        }
-
-        throw new ParserInvalidResultException(this, "Invalid Command");
-    }
+    throw new ParserInvalidResultException(this, "Invalid Command");
+  }
 }

@@ -30,18 +30,18 @@ import org.bukkit.command.CommandSender;
 @Getter
 public class BukkitCommandContext extends CommandContext {
 
-    // Bukkit Command Sender
-    private final CommandSender sender;
+  // Bukkit Command Sender
+  private final CommandSender sender;
 
-    public BukkitCommandContext(CommandSender sender) {
-        super();
+  public BukkitCommandContext(CommandSender sender) {
+    super();
 
-        this.sender = sender;
-    }
+    this.sender = sender;
+  }
 
-    @SuppressWarnings("unused")
-    public BukkitCommandContext(BukkitCommandContext original) {
-        super(original);
-        this.sender = original.getSender();
-    }
+  @SuppressWarnings("unused")
+  public BukkitCommandContext(BukkitCommandContext original) {
+    super(original);
+    this.sender = original.getSender();
+  }
 }

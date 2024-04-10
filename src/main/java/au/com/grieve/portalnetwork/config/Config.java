@@ -22,27 +22,27 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import lombok.Getter;
-import lombok.ToString;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @SuppressWarnings("FieldMayBeFinal") // Jackson requires that the fields are not final
 @ToString
 public class Config {
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    public static final int CURRENT_VERSION = 2;
+  public static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper(new YAMLFactory())
+          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+  public static final int CURRENT_VERSION = 2;
 
-    private Integer version = 2;
-    private Map<String, PortalConfig> portal = new HashMap<>();
+  private Integer version = 2;
+  private Map<String, PortalConfig> portal = new HashMap<>();
 
-    public static Config load(File configFile) throws IOException {
-        return OBJECT_MAPPER.readValue(configFile, Config.class);
-    }
-
+  public static Config load(File configFile) throws IOException {
+    return OBJECT_MAPPER.readValue(configFile, Config.class);
+  }
 }

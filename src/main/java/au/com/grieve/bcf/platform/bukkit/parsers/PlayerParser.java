@@ -29,18 +29,17 @@ import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
 import au.com.grieve.bcf.parsers.SingleParser;
 import au.com.grieve.bcf.platform.bukkit.BukkitCommandContext;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Name of a player
@@ -52,63 +51,67 @@ import java.util.stream.Collectors;
  */
 public class PlayerParser extends SingleParser {
 
-    public PlayerParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
-        super(manager, argNode, context);
-    }
+  public PlayerParser(CommandManager<?, ?> manager, ArgNode argNode, CommandContext context) {
+    super(manager, argNode, context);
+  }
 
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        switch (getParameter("mode", "offline")) {
-            case "online":
-                if (getInput().equals("%self")) {
-                    CommandSender sender = ((BukkitCommandContext) context).getSender();
-                    if (sender instanceof ConsoleCommandSender) {
-                        throw new ParserInvalidResultException(this, "When console a player name is required");
-                    }
-                    return sender;
-                }
-
-                return Bukkit.getOnlinePlayers().stream()
-                        .filter(p -> p.getName().equalsIgnoreCase(getInput()))
-                        .findFirst()
-                        .orElseThrow(() -> new ParserInvalidResultException(this, "No such player can be found online"));
-            case "offline":
-                if (getInput().equals("%self")) {
-                    CommandSender sender = ((BukkitCommandContext) context).getSender();
-                    if (sender instanceof ConsoleCommandSender) {
-                        throw new ParserInvalidResultException(this, "When console a player name is required");
-                    }
-
-                    return Bukkit.getOfflinePlayer(((Player) ((BukkitCommandContext) context).getSender()).getUniqueId());
-                }
-
-                return Arrays.stream(Bukkit.getOfflinePlayers())
-                        .filter(p -> p.getName() != null)
-                        .filter(p -> Objects.equals(p.getName().toLowerCase(), getInput().toLowerCase()))
-                        .findFirst()
-                        .orElseThrow(() -> new ParserInvalidResultException(this, "No such player can be found"));
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    switch (getParameter("mode", "offline")) {
+      case "online":
+        if (getInput().equals("%self")) {
+          CommandSender sender = ((BukkitCommandContext) context).getSender();
+          if (sender instanceof ConsoleCommandSender) {
+            throw new ParserInvalidResultException(this, "When console a player name is required");
+          }
+          return sender;
         }
 
-        throw new ParserInvalidResultException(this, "Invalid mode: " + getParameter("mode"));
-    }
+        return Bukkit.getOnlinePlayers().stream()
+            .filter(p -> p.getName().equalsIgnoreCase(getInput()))
+            .findFirst()
+            .orElseThrow(
+                () -> new ParserInvalidResultException(this, "No such player can be found online"));
+      case "offline":
+        if (getInput().equals("%self")) {
+          CommandSender sender = ((BukkitCommandContext) context).getSender();
+          if (sender instanceof ConsoleCommandSender) {
+            throw new ParserInvalidResultException(this, "When console a player name is required");
+          }
 
-    @Override
-    protected List<String> complete() {
-        switch (getParameter("mode", "offline")) {
-            case "online":
-                return Bukkit.getOnlinePlayers().stream()
-                        .map(HumanEntity::getName)
-                        .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
-                        .limit(20)
-                        .collect(Collectors.toList());
-            case "offline":
-                return Arrays.stream(Bukkit.getOfflinePlayers())
-                        .map(OfflinePlayer::getName).filter(Objects::nonNull)
-                        .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
-                        .limit(20)
-                        .collect(Collectors.toList());
+          return Bukkit.getOfflinePlayer(
+              ((Player) ((BukkitCommandContext) context).getSender()).getUniqueId());
         }
 
-        return new ArrayList<>();
+        return Arrays.stream(Bukkit.getOfflinePlayers())
+            .filter(p -> p.getName() != null)
+            .filter(p -> Objects.equals(p.getName().toLowerCase(), getInput().toLowerCase()))
+            .findFirst()
+            .orElseThrow(
+                () -> new ParserInvalidResultException(this, "No such player can be found"));
     }
+
+    throw new ParserInvalidResultException(this, "Invalid mode: " + getParameter("mode"));
+  }
+
+  @Override
+  protected List<String> complete() {
+    switch (getParameter("mode", "offline")) {
+      case "online":
+        return Bukkit.getOnlinePlayers().stream()
+            .map(HumanEntity::getName)
+            .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
+            .limit(20)
+            .collect(Collectors.toList());
+      case "offline":
+        return Arrays.stream(Bukkit.getOfflinePlayers())
+            .map(OfflinePlayer::getName)
+            .filter(Objects::nonNull)
+            .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
+            .limit(20)
+            .collect(Collectors.toList());
+    }
+
+    return new ArrayList<>();
+  }
 }

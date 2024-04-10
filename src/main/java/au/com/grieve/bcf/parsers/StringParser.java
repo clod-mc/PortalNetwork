@@ -27,41 +27,40 @@ import au.com.grieve.bcf.ArgNode;
 import au.com.grieve.bcf.CommandContext;
 import au.com.grieve.bcf.CommandManager;
 import au.com.grieve.bcf.exceptions.ParserInvalidResultException;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class StringParser extends SingleParser {
 
-    public StringParser(CommandManager<?, ?> manager, ArgNode node, CommandContext context) {
-        super(manager, node, context);
+  public StringParser(CommandManager<?, ?> manager, ArgNode node, CommandContext context) {
+    super(manager, node, context);
+  }
+
+  @Override
+  protected List<String> complete() {
+    List<String> result = new ArrayList<>();
+
+    for (String alias : getParameter("options", "").split("\\|")) {
+      if (alias.toLowerCase().startsWith(getInput().toLowerCase())) {
+        result.add(alias);
+      }
     }
 
-    @Override
-    protected List<String> complete() {
-        List<String> result = new ArrayList<>();
+    return result;
+  }
 
-        for (String alias : getParameter("options", "").split("\\|")) {
-            if (alias.toLowerCase().startsWith(getInput().toLowerCase())) {
-                result.add(alias);
-            }
-        }
-
-        return result;
+  @Override
+  protected Object result() throws ParserInvalidResultException {
+    if (getParameter("options", "").isEmpty()) {
+      return getInput();
     }
 
-    @Override
-    protected Object result() throws ParserInvalidResultException {
-        if (getParameter("options", "").isEmpty()) {
-            return getInput();
-        }
-
-        for (String alias : getParameter("options", "").split("\\|")) {
-            if (alias.equalsIgnoreCase(getInput())) {
-                return alias;
-            }
-        }
-
-        throw new ParserInvalidResultException(this, "Invalid Option");
+    for (String alias : getParameter("options", "").split("\\|")) {
+      if (alias.equalsIgnoreCase(getInput())) {
+        return alias;
+      }
     }
+
+    throw new ParserInvalidResultException(this, "Invalid Option");
+  }
 }

@@ -33,8 +33,9 @@ import org.bukkit.Material;
 @NoArgsConstructor
 @ToString
 public class BlockConfig {
-    @JsonDeserialize(using = Converter.MaterialDeserializer.class)
-    private Material active = Material.BEACON;
-    @JsonDeserialize(using = Converter.MaterialDeserializer.class)
-    private Material inactive = Material.GOLD_BLOCK;
+  @JsonDeserialize(using = Converter.MaterialDeserializer.class)
+  private Material active = Material.BEACON;
+
+  @JsonDeserialize(using = Converter.MaterialDeserializer.class)
+  private Material inactive = Material.GOLD_BLOCK;
 }
