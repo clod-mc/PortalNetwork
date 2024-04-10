@@ -57,59 +57,61 @@ public class PlayerParser extends SingleParser {
 
   @Override
   protected Object result() throws ParserInvalidResultException {
-    switch (getParameter("mode", "offline")) {
-      case "online":
+    return switch (getParameter("mode", "offline")) {
+      case "online" -> {
         if (getInput().equals("%self")) {
           CommandSender sender = ((BukkitCommandContext) context).getSender();
           if (sender instanceof ConsoleCommandSender) {
             throw new ParserInvalidResultException(this, "When console a player name is required");
           }
-          return sender;
+          yield sender;
         }
-
-        return Bukkit.getOnlinePlayers().stream()
+        yield Bukkit.getOnlinePlayers().stream()
             .filter(p -> p.getName().equalsIgnoreCase(getInput()))
             .findFirst()
             .orElseThrow(
                 () -> new ParserInvalidResultException(this, "No such player can be found online"));
-      case "offline":
+      }
+      case "offline" -> {
         if (getInput().equals("%self")) {
           CommandSender sender = ((BukkitCommandContext) context).getSender();
           if (sender instanceof ConsoleCommandSender) {
             throw new ParserInvalidResultException(this, "When console a player name is required");
           }
 
-          return Bukkit.getOfflinePlayer(
+          yield Bukkit.getOfflinePlayer(
               ((Player) ((BukkitCommandContext) context).getSender()).getUniqueId());
         }
-
-        return Arrays.stream(Bukkit.getOfflinePlayers())
+        yield Arrays.stream(Bukkit.getOfflinePlayers())
             .filter(p -> p.getName() != null)
             .filter(p -> Objects.equals(p.getName().toLowerCase(), getInput().toLowerCase()))
             .findFirst()
             .orElseThrow(
                 () -> new ParserInvalidResultException(this, "No such player can be found"));
-    }
-
-    throw new ParserInvalidResultException(this, "Invalid mode: " + getParameter("mode"));
+      }
+      default ->
+          throw new ParserInvalidResultException(this, "Invalid mode: " + getParameter("mode"));
+    };
   }
 
   @Override
   protected List<String> complete() {
     switch (getParameter("mode", "offline")) {
-      case "online":
+      case "online" -> {
         return Bukkit.getOnlinePlayers().stream()
             .map(HumanEntity::getName)
             .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
             .limit(20)
             .collect(Collectors.toList());
-      case "offline":
+      }
+      case "offline" -> {
         return Arrays.stream(Bukkit.getOfflinePlayers())
             .map(OfflinePlayer::getName)
             .filter(Objects::nonNull)
             .filter(s -> s.toLowerCase().startsWith(getInput().toLowerCase()))
             .limit(20)
             .collect(Collectors.toList());
+      }
     }
 
     return new ArrayList<>();

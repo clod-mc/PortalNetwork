@@ -37,7 +37,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 
@@ -59,8 +58,7 @@ public class CommandRoot {
   protected CommandExecute getErrorExecute(
       BaseCommand command, String message, CommandContext context) {
     for (BaseCommand cmd :
-        Stream.concat(Stream.of(command), context.getCommandStack().stream())
-            .collect(Collectors.toList())) {
+        Stream.concat(Stream.of(command), context.getCommandStack().stream()).toList()) {
       if (cmd.getErrorMethod() != null) {
         return new CommandExecute(
             cmd, cmd.getErrorMethod(), Collections.singletonList(message), context);
@@ -71,8 +69,7 @@ public class CommandRoot {
 
   protected CommandExecute getDefaultExecute(BaseCommand command, CommandContext context) {
     for (BaseCommand cmd :
-        Stream.concat(Stream.of(command), context.getCommandStack().stream())
-            .collect(Collectors.toList())) {
+        Stream.concat(Stream.of(command), context.getCommandStack().stream()).toList()) {
       if (cmd.getDefaultMethod() != null) {
         return new CommandExecute(cmd, cmd.getDefaultMethod(), context);
       }
@@ -145,8 +142,7 @@ public class CommandRoot {
 
     // Return best execute
     CommandExecute best = null;
-    for (CommandExecute testExecute :
-        commandExecutes.stream().filter(Objects::nonNull).collect(Collectors.toList())) {
+    for (CommandExecute testExecute : commandExecutes.stream().filter(Objects::nonNull).toList()) {
       // Always replace best when its null
       if (best == null) {
         best = testExecute;
@@ -223,8 +219,7 @@ public class CommandRoot {
 
     // Return best execute
     CommandExecute best = null;
-    for (CommandExecute testExecute :
-        commandExecutes.stream().filter(Objects::nonNull).collect(Collectors.toList())) {
+    for (CommandExecute testExecute : commandExecutes.stream().filter(Objects::nonNull).toList()) {
       // Always replace best when its null
       if (best == null) {
         best = testExecute;
@@ -303,7 +298,7 @@ public class CommandRoot {
                               "-" + so.name,
                               so.parser.getParameter("description", null),
                               null))
-                  .collect(Collectors.toList()));
+                  .toList());
           continue;
         }
 
@@ -389,7 +384,7 @@ public class CommandRoot {
                                   "-" + so.name,
                                   so.parser.getParameter("description", null),
                                   null))
-                      .collect(Collectors.toList()));
+                      .toList());
             }
           }
         }
@@ -418,7 +413,7 @@ public class CommandRoot {
                             "-" + so.name,
                             so.parser.getParameter("description", null),
                             null))
-                .collect(Collectors.toList()));
+                .toList());
       }
     }
     return ret;

@@ -119,9 +119,7 @@ public class BasePortal {
     update();
   }
 
-  /**
-   * Load configuration from manager for this portal type
-   */
+  /** Load configuration from manager for this portal type */
   public Location getLocation() {
     return location.clone();
   }
@@ -145,9 +143,7 @@ public class BasePortal {
     }
   }
 
-  /**
-   * Update Portal
-   */
+  /** Update Portal */
   public void update() {
     // Check that wool only appears on 3 sides
     List<Location> blocks =
@@ -244,7 +240,8 @@ public class BasePortal {
 
   public boolean dial(Integer address) {
     if (address == null) {
-      return dial(null, null);
+      dial(null, null);
+      return true;
     }
 
     if (!valid) {
@@ -256,13 +253,14 @@ public class BasePortal {
       return false;
     }
 
-    return dial(portal, null);
+    dial(portal, null);
+    return true;
   }
 
-  public boolean dial(BasePortal portal, BasePortal from) {
+  public void dial(BasePortal portal, BasePortal from) {
     if (portal == null) {
       if (dialledPortal == null) {
-        return true;
+        return;
       }
 
       // If we are not connected to from we will get our dialed to undial
@@ -272,14 +270,14 @@ public class BasePortal {
 
       dialledPortal = null;
       deactivate();
-      return true;
+      return;
     }
 
     // Dialing
 
     // Already Dialed to portal?
     if (dialledPortal == portal) {
-      return true;
+      return;
     }
 
     // If we are not connected to from we will get our dialed to undial
@@ -294,13 +292,9 @@ public class BasePortal {
 
     dialledPortal = portal;
     activate();
-
-    return true;
   }
 
-  /**
-   * Dial next available address, otherwise we deactivate.
-   */
+  /** Dial next available address, otherwise we deactivate. */
   @SuppressWarnings("UnusedReturnValue")
   public boolean dialNext() {
     if (!valid) {
@@ -331,9 +325,7 @@ public class BasePortal {
     return true;
   }
 
-  /**
-   * Return an iterator over the portal part of the portal
-   */
+  /** Return an iterator over the portal part of the portal */
   public Iterator<BlockVector> getPortalIterator() {
 
     final int maxWidth = getWidth();
@@ -405,9 +397,7 @@ public class BasePortal {
     };
   }
 
-  /**
-   * Return an iterator over the portal base
-   */
+  /** Return an iterator over the portal base */
   public Iterator<BlockVector> getPortalBaseIterator() {
 
     final int maxWidth = getWidth();
@@ -468,9 +458,7 @@ public class BasePortal {
     };
   }
 
-  /**
-   * Return an iterator over the portal frame
-   */
+  /** Return an iterator over the portal frame */
   public Iterator<BlockVector> getPortalFrameIterator() {
 
     final int maxWidth = getWidth();
@@ -560,16 +548,12 @@ public class BasePortal {
     };
   }
 
-  /**
-   * Activate Portal using type of portal as to what is seen/heard
-   */
+  /** Activate Portal using type of portal as to what is seen/heard */
   public void activate() {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Deactivate Portal
-   */
+  /** Deactivate Portal */
   public void deactivate() {
     throw new UnsupportedOperationException();
   }
@@ -599,9 +583,7 @@ public class BasePortal {
     }
   }
 
-  /**
-   * Return new position and velocity of an entity to dialled portal
-   */
+  /** Return new position and velocity of an entity to dialled portal */
   PositionVelocity calculatePosition(Entity entity) {
     if (getDialledPortal() == null) {
       return null;
@@ -684,12 +666,12 @@ public class BasePortal {
     entity.setVelocity(event.getTo().toVector().subtract(event.getFrom().toVector()));
     PositionVelocity pv = calculatePosition(entity);
 
-    entity.setVelocity(pv.getVelocity());
-    entity.teleport(pv.getLocation());
+    entity.setVelocity(pv.velocity());
+    entity.teleport(pv.location());
 
     // Rotate and Mount all passengers
     for (Entity passenger : passengers) {
-      passenger.teleport(pv.getLocation().clone().setDirection(pv.getVelocity().normalize()));
+      passenger.teleport(pv.location().clone().setDirection(pv.velocity().normalize()));
       entity.addPassenger(passenger);
     }
   }
@@ -720,19 +702,19 @@ public class BasePortal {
     player.setVelocity(event.getTo().toVector().subtract(event.getFrom().toVector()));
     PositionVelocity pv = calculatePosition(player);
 
-    player.setVelocity(pv.getVelocity());
-    player.teleport(pv.getLocation());
+    player.setVelocity(pv.velocity());
+    player.teleport(pv.location());
     // event.setTo(pv.getLocation());
 
     if (insideVehicle) {
-      vehicle.teleport(pv.getLocation());
-      vehicle.setVelocity(pv.getVelocity());
+      vehicle.teleport(pv.location());
+      vehicle.setVelocity(pv.velocity());
       new BukkitRunnable() {
 
         @Override
         public void run() {
           for (Entity passenger : passengers) {
-            passenger.teleport(pv.getLocation());
+            passenger.teleport(pv.location());
             vehicle.addPassenger(passenger);
           }
         }
@@ -740,20 +722,7 @@ public class BasePortal {
     }
   }
 
-  @Getter
-  static class PositionVelocity {
-    final Location location;
-
-    final Vector velocity;
-
-    final double yawDiff;
-
-    PositionVelocity(Location location, Vector velocity, double yawDiff) {
-      this.location = location;
-      this.velocity = velocity;
-      this.yawDiff = yawDiff;
-    }
-  }
+  record PositionVelocity(Location location, Vector velocity, double yawDiff) {}
 
   public void handleBlockBreak(BlockBreakEvent event) {
     // If it's the frame we cancel drops
@@ -817,9 +786,7 @@ public class BasePortal {
     manager.save();
   }
 
-  /**
-   * Remove portal cleanly
-   */
+  /** Remove portal cleanly */
   public void remove() {
     dial(null);
     deactivate();

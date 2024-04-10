@@ -105,15 +105,9 @@ public class MainCommand extends BukkitCommand {
 
       String worldName = portal.getLocation().getWorld().getName();
       switch (worldName) {
-        case "world":
-          worldName = "overworld";
-          break;
-        case "world_nether":
-          worldName = "nether";
-          break;
-        case "world_the_end":
-          worldName = "the_end";
-          break;
+        case "world" -> worldName = "overworld";
+        case "world_nether" -> worldName = "nether";
+        case "world_the_end" -> worldName = "the_end";
       }
 
       ComponentBuilder msg =

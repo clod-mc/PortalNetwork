@@ -50,9 +50,7 @@ public class ArgNode {
     return parse(new StringReader(input));
   }
 
-  /**
-   * Parse a string and return new Data Nodes
-   */
+  /** Parse a string and return new Data Nodes */
   public static List<ArgNode> parse(StringReader reader) {
     List<ArgNode> result = new ArrayList<>();
 
@@ -79,64 +77,57 @@ public class ArgNode {
       char c = (char) i;
 
       switch (state) {
-        case NAME:
+        case NAME -> {
           switch (" (".indexOf(c)) {
-            case 0:
-              if (name.length() > 0) {
+            case 0 -> {
+              if (!name.isEmpty()) {
                 result.add(new ArgNode(name.toString()));
                 name = new StringBuilder();
-                break;
               }
-              break;
-            case 1:
+            }
+            case 1 -> {
               state = State.PARAM_KEY;
               parameters = new HashMap<>();
               key = new StringBuilder();
-              break;
-            default:
-              name.append(c);
+            }
+            default -> name.append(c);
           }
-          break;
-        case PARAM_KEY:
+        }
+        case PARAM_KEY -> {
           //noinspection SwitchStatementWithTooFewBranches
           switch ("=".indexOf(c)) {
-            case 0:
+            case 0 -> {
               state = State.PARAM_VALUE;
               value = new StringBuilder();
-              break;
-            default:
-              key.append(c);
+            }
+            default -> key.append(c);
           }
-          break;
-        case PARAM_VALUE:
+        }
+        case PARAM_VALUE -> {
           switch (",)\"'".indexOf(c)) {
-            case 0:
+            case 0 -> {
               parameters.put(key.toString().trim(), value.toString().trim());
               key = new StringBuilder();
               state = State.PARAM_KEY;
-              break;
-            case 1:
+            }
+            case 1 -> {
               parameters.put(key.toString().trim(), value.toString().trim());
               result.add(new ArgNode(name.toString(), parameters));
               name = new StringBuilder();
               state = State.PARAM_END;
-              break;
-            case 2:
-            case 3:
-              if (value.length() == 0) {
+            }
+            case 2, 3 -> {
+              if (value.isEmpty()) {
                 quote = c;
                 state = State.PARAM_VALUE_QUOTE;
-                break;
               }
-              break;
-            default:
-              value.append(c);
+            }
+            default -> value.append(c);
           }
-          break;
-        case PARAM_VALUE_QUOTE:
+        }
+        case PARAM_VALUE_QUOTE -> {
           switch ("\"'\\".indexOf(c)) {
-            case 0:
-            case 1:
+            case 0, 1 -> {
               if (c == quote) {
                 parameters.put(key.toString().trim(), value.toString().trim());
                 key = new StringBuilder();
@@ -144,8 +135,8 @@ public class ArgNode {
               } else {
                 value.append(c);
               }
-              break;
-            case 2:
+            }
+            case 2 -> {
               value.append(c);
               try {
                 i = reader.read();
@@ -156,36 +147,32 @@ public class ArgNode {
                 break;
               }
               value.append((char) i);
-              break;
-            default:
-              value.append(c);
+            }
+            default -> value.append(c);
           }
-          break;
-        case PARAM_VALUE_QUOTE_END:
+        }
+        case PARAM_VALUE_QUOTE_END -> {
           switch (",)".indexOf(c)) {
-            case 0:
-              state = State.PARAM_KEY;
-              break;
-            case 1:
+            case 0 -> state = State.PARAM_KEY;
+            case 1 -> {
               result.add(new ArgNode(name.toString(), parameters));
               name = new StringBuilder();
               state = State.PARAM_END;
-              break;
+            }
           }
-          break;
-        case PARAM_END:
-          //noinspection SwitchStatementWithTooFewBranches
-          switch (" ".indexOf(c)) {
-            case 0:
-              state = State.NAME;
-              break;
-          }
-          break;
+        }
+        case PARAM_END ->
+            //noinspection SwitchStatementWithTooFewBranches
+            state =
+                switch (" ".indexOf(c)) {
+                  case 0 -> State.NAME;
+                  default -> state;
+                };
       }
 
     } while (true);
 
-    if (state == State.NAME && name.length() > 0) {
+    if (state == State.NAME && !name.isEmpty()) {
       result.add(new ArgNode(name.toString()));
     }
 
@@ -198,11 +185,9 @@ public class ArgNode {
       return true;
     }
 
-    if (!(obj instanceof ArgNode)) {
+    if (!(obj instanceof ArgNode data)) {
       return false;
     }
-
-    ArgNode data = (ArgNode) obj;
 
     return data.getName().equals(name);
   }
