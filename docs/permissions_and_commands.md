@@ -1,11 +1,6 @@
 ## Permission Summary
 
-| Permission                   |  Description
-|---                           |---
-| portalnetwork.admin          | Access to all Admin commands
-| portalnetwork.command.give   | Access to `give`
-| portalnetwork.command.list   | Access to `list`
-| portalnetwork.command.reload | Access to `reload`
+OP permission is required to run any command.
 
 No permission is necessary to build a portal.
 
@@ -17,34 +12,24 @@ Execute commands with `/portalnetwork <command>` or `/pn <command>`.
 
 Give a player a `PortalBlock`
 
-`/pn give [-type <portal type>] [<player name>]`
+`/pn give [<player name>] [<portal type>]`
 
 Where:
 
-* `-type <portal type>`: Type of portal block to give. Defaults to `nether`. Built in types are `nether`, `end`, `hidden`.
 * `<player name>`: Who to give it to. Defaults to yourself.
+* `<portal type>`: Type of portal block to give. Defaults to `nether`. Built in types are `nether`, `end`, `hidden`.
 
-!!! info "Permissions (any of)"
-    * portalnetwork.admin
-    * portalnetwork.command.give
-   
 !!! examples
-    /pn give -type end Bob
+    /pn give Bob end
     
     /pn give
     
-    /pn give -type hidden
-
 ### `list`
 
 List all portals
 
 `/pn list`
 
-!!! info "Permissions (any of)"
-    * portalnetwork.admin
-    * portalnetwork.command.list
-   
 !!! examples
     /pn list
     
@@ -55,9 +40,5 @@ Reload all configuration.
 
 `/pn reload`
 
-!!! info "Permissions (any of)"
-    * portalnetwork.admin
-    * portalnetwork.command.reload
-   
 !!! examples
     /pn reload

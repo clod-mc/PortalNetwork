@@ -19,28 +19,16 @@
 package au.com.grieve.portalnetwork.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.CommandPermission;
 import dev.jorel.commandapi.executors.CommandArguments;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
-public class MainCommand {
-  public static void register() {
-    new CommandAPICommand("portalnetwork")
-        .withAliases("pn")
-        .withShortDescription("PortalNetwork")
-        .withFullDescription(
-            "A portal system that allows players to create portals that can dial each other")
-        .withPermission(CommandPermission.OP)
-        .withSubcommand(ReloadCommand.build())
-        .withSubcommand(ListCommand.build())
-        .withSubcommand(GiveCommand.build())
-        .withSubcommand(HelpCommand.build())
-        .withUsage(
-            "/portalnetwork reload", "/portalnetwork list", "/portalnetwork give [player] [type]")
+public class HelpCommand {
+  public static CommandAPICommand build() {
+    return new CommandAPICommand("help")
+        .withShortDescription("Help")
         .executes(
             (CommandSender sender, CommandArguments args) ->
-                Bukkit.dispatchCommand(sender, "help portalnetwork"))
-        .register();
+                Bukkit.dispatchCommand(sender, "help portalnetwork"));
   }
 }

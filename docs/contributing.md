@@ -13,28 +13,22 @@ If you know Java then take a look at open issues and create a pull request.
 Do the following to build the code:
 
 ```shell
-git clone https://github.com/Bundabrg/PortalNetwork
+git clone https://github.com/clod-mc/PortalNetwork
 cd PortalNetwork
-mvn clean package
+make build
 ```
 
 ## Contributing Documentation
 
 If you can help improve the documentation it would be highly appreciated. Have a look under the `docs` folder for the existing documentation.
 
-The documentation is built using `mkdocs`. You can set up a hot-build dev environment that will auto-refresh changes as they are made.
+The documentation is built using `make docs`. You can set up a hot-build dev environment that will auto-refresh changes as they are made.
 
 ### Requirements
 
 * python3
 * pip3
 * npm (only if changing themes)
-
-Install dependencies by running:
-
-```
-pip3 install -r requirements.txt
-```
 
 ### Dev Environment
 

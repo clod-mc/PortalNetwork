@@ -18,7 +18,6 @@
 
 package au.com.grieve.portalnetwork;
 
-import au.com.grieve.bcf.platform.bukkit.BukkitCommandManager;
 import au.com.grieve.portalnetwork.commands.MainCommand;
 import au.com.grieve.portalnetwork.config.BlockConfig;
 import au.com.grieve.portalnetwork.config.Config;
@@ -27,10 +26,11 @@ import au.com.grieve.portalnetwork.config.PortalConfig;
 import au.com.grieve.portalnetwork.config.RecipeConfig;
 import au.com.grieve.portalnetwork.config.SoundConfig;
 import au.com.grieve.portalnetwork.listeners.PortalEvents;
-import au.com.grieve.portalnetwork.parsers.PortalTypeParser;
 import au.com.grieve.portalnetwork.portals.End;
 import au.com.grieve.portalnetwork.portals.Hidden;
 import au.com.grieve.portalnetwork.portals.Nether;
+import dev.jorel.commandapi.CommandAPI;
+import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +50,6 @@ public final class PortalNetwork extends JavaPlugin {
   @Getter private static PortalNetwork instance;
 
   private final File configFile = new File(getDataFolder(), "config.yml");
-  private BukkitCommandManager bcf;
   private PortalManager portalManager;
   private Config configuration;
 
@@ -59,13 +58,15 @@ public final class PortalNetwork extends JavaPlugin {
   }
 
   @Override
-  public void onEnable() {
-    // Setup Command Manager
-    bcf = new BukkitCommandManager(this);
-    bcf.registerParser("portaltype", PortalTypeParser.class);
-
+  public void onLoad() {
     // Register Commands
-    bcf.registerCommand(new MainCommand());
+    CommandAPI.onLoad(new CommandAPIBukkitConfig(this).verboseOutput(true));
+    MainCommand.register();
+  }
+
+  @Override
+  public void onEnable() {
+    CommandAPI.onEnable();
 
     // Initialize Configs
     try {
@@ -145,6 +146,7 @@ public final class PortalNetwork extends JavaPlugin {
     if (portalManager != null) {
       portalManager.clear();
     }
+    CommandAPI.onDisable();
   }
 
   private void initConfig() throws IOException {

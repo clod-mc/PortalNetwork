@@ -18,29 +18,26 @@
 
 package au.com.grieve.portalnetwork.commands;
 
+import au.com.grieve.portalnetwork.PortalNetwork;
+import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.CommandPermission;
 import dev.jorel.commandapi.executors.CommandArguments;
-import org.bukkit.Bukkit;
+import java.io.IOException;
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.command.CommandSender;
 
-public class MainCommand {
-  public static void register() {
-    new CommandAPICommand("portalnetwork")
-        .withAliases("pn")
-        .withShortDescription("PortalNetwork")
-        .withFullDescription(
-            "A portal system that allows players to create portals that can dial each other")
-        .withPermission(CommandPermission.OP)
-        .withSubcommand(ReloadCommand.build())
-        .withSubcommand(ListCommand.build())
-        .withSubcommand(GiveCommand.build())
-        .withSubcommand(HelpCommand.build())
-        .withUsage(
-            "/portalnetwork reload", "/portalnetwork list", "/portalnetwork give [player] [type]")
+public class ReloadCommand {
+  public static CommandAPICommand build() {
+    return new CommandAPICommand("reload")
+        .withShortDescription("Reload Plugin")
         .executes(
-            (CommandSender sender, CommandArguments args) ->
-                Bukkit.dispatchCommand(sender, "help portalnetwork"))
-        .register();
+            (CommandSender sender, CommandArguments args) -> {
+              try {
+                PortalNetwork.getInstance().reload();
+                CommandUtil.sendMessage(sender, ChatColor.YELLOW, "Reloaded PortalNetwork");
+              } catch (IOException e) {
+                throw CommandAPI.failWithString("Failed to reload PortalNetwork");
+              }
+            });
   }
 }
