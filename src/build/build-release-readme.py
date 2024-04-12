@@ -28,13 +28,19 @@ def main() -> None:
         m = re.search(r"^\[([^\]]*)\] (\S+) (.+)$", commit_line)
         assert m
         meta, sha, desc = m[1].strip(), m[2], m[3]
+        if sha == "8895c45":
+            break
 
-        tag = None
-        if m := re.search(r"\(tag: ([^\)]+)\)", meta):
+        tags = [
+            m.removeprefix("tag: ")
+            for m in meta.strip("()").split(", ")
+            if m.startswith("tag: v")
+        ]
+        tag = tags[0] if tags else None
+        if tag:
             tag_count += 1
-            if tag_count == 4:
+            if tag_count == 6:
                 break
-            tag = m[1]
             if tag != last_tag:
                 print(f"\n#### {tag}")
                 last_tag = tag
