@@ -40,6 +40,7 @@ import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -149,6 +150,16 @@ public class PortalEvents implements Listener {
     }
 
     portal.handlePlayerInteract(event);
+  }
+
+  @EventHandler
+  public void onPlayerJoin(PlayerJoinEvent event) {
+    // Grant knowledge of the crafting recipe to all players.
+    // Ideally this should only happen once the player has picked up
+    // all of the items in a given recipe, but there's too much overhead
+    // to track all that.
+    PortalManager manager = PortalNetwork.getInstance().getPortalManager();
+    event.getPlayer().discoverRecipes(manager.getRecipes());
   }
 
   @SuppressWarnings("unused")
