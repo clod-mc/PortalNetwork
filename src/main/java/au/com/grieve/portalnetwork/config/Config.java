@@ -26,23 +26,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Getter;
-import lombok.ToString;
 
-@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@ToString
 public class Config {
+  public static final int CURRENT_VERSION = 2;
+
   public static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory())
           .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-  public static final int CURRENT_VERSION = 2;
-
-  private Integer version = 2;
-  private Map<String, PortalConfig> portal = new HashMap<>();
+  private final Map<String, PortalConfig> portal = new HashMap<>();
 
   public static Config load(File configFile) throws IOException {
     return OBJECT_MAPPER.readValue(configFile, Config.class);
+  }
+
+  public Map<String, PortalConfig> getPortal() {
+    return this.portal;
+  }
+
+  public String toString() {
+    return "Config(version=" + CURRENT_VERSION + ", portal=" + this.getPortal() + ")";
   }
 }

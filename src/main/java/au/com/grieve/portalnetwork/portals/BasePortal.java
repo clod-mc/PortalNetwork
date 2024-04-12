@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import lombok.Getter;
+import java.util.StringJoiner;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -49,10 +49,10 @@ public class BasePortal {
       new NamespacedKey(PortalNetwork.getInstance(), "portal_type");
 
   // Portal Manager
-  @Getter final PortalManager manager;
+  final PortalManager manager;
 
   // Portal Config
-  @Getter final PortalConfig config;
+  final PortalConfig config;
 
   // Location of Portal Block
   final Location location;
@@ -77,10 +77,10 @@ public class BasePortal {
           Material.BLACK_WOOL);
 
   // Network (16^2)
-  @Getter Integer network;
+  Integer network;
 
   // Address (16)
-  @Getter Integer address;
+  Integer address;
   static final List<Material> GLASS_MAPPINGS =
       List.of(
           Material.WHITE_STAINED_GLASS,
@@ -100,12 +100,12 @@ public class BasePortal {
           Material.RED_STAINED_GLASS,
           Material.BLACK_STAINED_GLASS);
 
-  @Getter boolean valid = false;
+  boolean valid = false;
   // Size Vectors
-  @Getter BlockVector left;
-  @Getter BlockVector right;
+  BlockVector left;
+  BlockVector right;
   // Dialed
-  @Getter BasePortal dialledPortal;
+  BasePortal dialledPortal;
 
   public BasePortal(PortalManager manager, Location location, PortalConfig config) {
     this.manager = manager;
@@ -131,10 +131,10 @@ public class BasePortal {
       if (dialledPortal != null) {
         location.getBlock().setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
       } else {
-        location.getBlock().setType(config.getBlock().getActive());
+        location.getBlock().setType(config.block().active());
       }
     } else {
-      location.getBlock().setType(config.getBlock().getInactive());
+      location.getBlock().setType(config.block().inactive());
     }
   }
 
@@ -288,9 +288,7 @@ public class BasePortal {
     activate();
   }
 
-  /**
-   * Dial next available address, otherwise we deactivate.
-   */
+  /** Dial next available address, otherwise we deactivate. */
   public void dialNext() {
     if (!valid) {
       return;
@@ -715,6 +713,26 @@ public class BasePortal {
     }
   }
 
+  public PortalConfig getConfig() {
+    return this.config;
+  }
+
+  public Integer getNetwork() {
+    return this.network;
+  }
+
+  public Integer getAddress() {
+    return this.address;
+  }
+
+  public boolean isValid() {
+    return this.valid;
+  }
+
+  public BasePortal getDialledPortal() {
+    return this.dialledPortal;
+  }
+
   record PositionVelocity(Location location, Vector velocity, double yawDiff) {}
 
   public void handleBlockBreak(BlockBreakEvent event) {
@@ -785,25 +803,17 @@ public class BasePortal {
 
   @Override
   public String toString() {
+    String dialed =
+        dialledPortal == null ? "[disconnected]" : dialledPortal.getAddress().toString();
     return getClass().getName()
         + "("
-        + "location="
-        + location
-        + ", "
-        + "left="
-        + left
-        + ", "
-        + "right="
-        + right
-        + ", "
-        + "network="
-        + network
-        + ", "
-        + "address="
-        + address
-        + ", "
-        + "dialled="
-        + (dialledPortal == null ? "[disconnected]" : dialledPortal.getAddress())
+        + new StringJoiner(", ")
+            .add("location=" + location)
+            .add("left=" + left)
+            .add("right=" + right)
+            .add("network=" + network)
+            .add("address=" + address)
+            .add("dialed=" + dialed)
         + ")";
   }
 }

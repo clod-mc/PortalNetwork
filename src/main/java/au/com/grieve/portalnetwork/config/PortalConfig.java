@@ -19,20 +19,7 @@
 package au.com.grieve.portalnetwork.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-@SuppressWarnings("CanBeFinal")
-@AllArgsConstructor
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
-@ToString
-public class PortalConfig {
-  private ItemConfig item;
-  private BlockConfig block;
-  private SoundConfig sound;
-  private RecipeConfig recipe = null;
-}
+public record PortalConfig(
+    ItemConfig item, BlockConfig block, SoundConfig sound, RecipeConfig recipe) {}

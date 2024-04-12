@@ -17,8 +17,6 @@ dependencies {
     implementation 'dev.jorel:commandapi-bukkit-shade:9.3.0'
     compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT'
     compileOnly 'org.jetbrains:annotations:15.0'
-    compileOnly 'org.projectlombok:lombok:1.18.32'
-    annotationProcessor 'org.projectlombok:lombok:1.18.32'
 
     shadow 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
     shadow 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2'

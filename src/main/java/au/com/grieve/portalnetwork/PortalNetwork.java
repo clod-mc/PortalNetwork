@@ -39,15 +39,13 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-@Getter
 public final class PortalNetwork extends JavaPlugin {
-  @Getter private static PortalNetwork instance;
+  private static PortalNetwork instance;
 
   private final File configFile = new File(getDataFolder(), "config.yml");
   private PortalManager portalManager;
@@ -56,6 +54,10 @@ public final class PortalNetwork extends JavaPlugin {
   @SuppressWarnings("unused")
   public PortalNetwork() {
     instance = this;
+  }
+
+  public static PortalNetwork getInstance() {
+    return PortalNetwork.instance;
   }
 
   @Override
@@ -167,5 +169,9 @@ public final class PortalNetwork extends JavaPlugin {
 
   public void reload() throws IOException {
     this.configuration = Config.load(this.configFile);
+  }
+
+  public PortalManager getPortalManager() {
+    return this.portalManager;
   }
 }

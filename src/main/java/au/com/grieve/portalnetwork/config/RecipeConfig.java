@@ -22,20 +22,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.bukkit.Material;
 
-@AllArgsConstructor
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
-@ToString
-public class RecipeConfig {
-  private List<String> items;
+public record RecipeConfig(
+    List<String> items,
+    @JsonDeserialize(contentUsing = Converter.MaterialDeserializer.class)
+        Map<Character, Material> mapping) {
+  public RecipeConfig(List<String> items, Map<Character, Material> mapping) {
+    this.items = items;
+    this.mapping = mapping;
+  }
 
-  @JsonDeserialize(contentUsing = Converter.MaterialDeserializer.class)
-  private Map<Character, Material> mapping;
+  @Override
+  public Map<Character, Material> mapping() {
+    return this.mapping;
+  }
 }

@@ -20,22 +20,24 @@ package au.com.grieve.portalnetwork.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.bukkit.Material;
 
-@SuppressWarnings("CanBeFinal")
-@AllArgsConstructor
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
-@ToString
-public class BlockConfig {
-  @JsonDeserialize(using = Converter.MaterialDeserializer.class)
-  private Material active = Material.BEACON;
+public record BlockConfig(
+    @JsonDeserialize(using = Converter.MaterialDeserializer.class) Material active,
+    @JsonDeserialize(using = Converter.MaterialDeserializer.class) Material inactive) {
+  public BlockConfig(Material active, Material inactive) {
+    this.active = active;
+    this.inactive = inactive;
+  }
 
-  @JsonDeserialize(using = Converter.MaterialDeserializer.class)
-  private Material inactive = Material.GOLD_BLOCK;
+  @Override
+  public Material active() {
+    return this.active;
+  }
+
+  @Override
+  public Material inactive() {
+    return this.inactive;
+  }
 }

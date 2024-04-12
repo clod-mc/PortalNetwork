@@ -38,8 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Stream;
-import lombok.Getter;
-import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -54,9 +52,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
 public class PortalManager {
-  @Getter
   private final BiMap<String, Class<? extends BasePortal>> portalClasses = HashBiMap.create();
 
   private final Map<String, PortalConfig> portalConfig = new HashMap<>();
@@ -64,7 +62,7 @@ public class PortalManager {
   private final JavaPlugin plugin;
 
   // Portals
-  @Getter private final List<BasePortal> portals = new ArrayList<>();
+  private final List<BasePortal> portals = new ArrayList<>();
 
   // Location Maps
   private final Hashtable<BlockVector, BasePortal> indexFrames = new Hashtable<>();
@@ -73,7 +71,7 @@ public class PortalManager {
   private final Hashtable<BlockVector, BasePortal> indexPortalBlocks = new Hashtable<>();
 
   // Recipes
-  @Getter private final List<NamespacedKey> recipes = new ArrayList<>();
+  private final List<NamespacedKey> recipes = new ArrayList<>();
 
   // Configuration
   public PortalManager(JavaPlugin plugin) {
@@ -92,14 +90,14 @@ public class PortalManager {
     portalConfig.put(name, config);
 
     // Handle custom recipe
-    if (config.getRecipe() != null) {
-      RecipeConfig r = config.getRecipe();
+    if (config.recipe() != null) {
+      RecipeConfig r = config.recipe();
       try {
         ItemStack item = createPortalBlock(name);
         NamespacedKey key = new NamespacedKey(plugin, name);
         ShapedRecipe recipe = new ShapedRecipe(key, item);
-        recipe.shape(r.getItems().toArray(new String[0]));
-        for (Map.Entry<Character, Material> ingredient : r.getMapping().entrySet()) {
+        recipe.shape(r.items().toArray(new String[0]));
+        for (Map.Entry<Character, Material> ingredient : r.mapping().entrySet()) {
           recipe.setIngredient(ingredient.getKey(), ingredient.getValue());
         }
         plugin.getServer().addRecipe(recipe);
@@ -235,11 +233,11 @@ public class PortalManager {
     PortalConfig pc = portalConfig.get(portalType);
 
     // Create a Portal Block
-    ItemStack item = new ItemStack(pc.getItem().getBlock(), 1);
+    ItemStack item = new ItemStack(pc.item().block(), 1);
     ItemMeta meta = item.getItemMeta();
 
     assert meta != null;
-    meta.setDisplayName(pc.getItem().getName());
+    meta.setDisplayName(pc.item().name());
     meta.getPersistentDataContainer()
         .set(BasePortal.PortalTypeKey, PersistentDataType.STRING, portalType);
     item.setItemMeta(meta);
@@ -294,7 +292,7 @@ public class PortalManager {
   }
 
   /** Get a portal at location */
-  public BasePortal find(@NonNull BlockVector search, Boolean valid) {
+  public BasePortal find(@NotNull BlockVector search, Boolean valid) {
     BasePortal portal =
         Stream.concat(
                 indexFrames.entrySet().stream(),
@@ -313,7 +311,7 @@ public class PortalManager {
   }
 
   /** Get a portal at location */
-  public BasePortal find(@NonNull Location location, Boolean valid, int distance) {
+  public BasePortal find(@NotNull Location location, Boolean valid, int distance) {
     BlockVector search = location.toVector().toBlockVector();
     BasePortal portal;
 
@@ -338,16 +336,16 @@ public class PortalManager {
     return null;
   }
 
-  public BasePortal find(@NonNull Location location) {
+  public BasePortal find(@NotNull Location location) {
     return find(location, null, 0);
   }
 
-  public BasePortal find(@NonNull Location location, int distance) {
+  public BasePortal find(@NotNull Location location, int distance) {
     return find(location, null, distance);
   }
 
   /** Get a portal based upon its inside */
-  public BasePortal findByPortal(@NonNull BlockVector search, Boolean valid) {
+  public BasePortal findByPortal(@NotNull BlockVector search, Boolean valid) {
     BasePortal portal =
         indexPortals.entrySet().stream()
             .filter(e -> e.getKey().equals(search))
@@ -363,11 +361,23 @@ public class PortalManager {
     return null;
   }
 
-  public BasePortal findByPortal(@NonNull Location location) {
+  public BasePortal findByPortal(@NotNull Location location) {
     return findByPortal(location.toVector().toBlockVector(), null);
   }
 
-  public BasePortal getPortal(@NonNull Location location) {
+  public BasePortal getPortal(@NotNull Location location) {
     return indexPortalBlocks.get(location.toVector().toBlockVector());
+  }
+
+  public BiMap<String, Class<? extends BasePortal>> getPortalClasses() {
+    return this.portalClasses;
+  }
+
+  public List<BasePortal> getPortals() {
+    return this.portals;
+  }
+
+  public List<NamespacedKey> getRecipes() {
+    return this.recipes;
   }
 }

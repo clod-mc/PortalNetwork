@@ -86,7 +86,7 @@ public class End extends BasePortal {
     }
 
     // Play portal sound
-    location.getWorld().playSound(location, config.getSound().getStart(), 1f, 1);
+    location.getWorld().playSound(location, config.sound().start(), 1f, 1);
   }
 
   /**
@@ -122,6 +122,6 @@ public class End extends BasePortal {
     updateBlock();
 
     // Play portal sound
-    location.getWorld().playSound(location, config.getSound().getStop(), 1f, 1);
+    location.getWorld().playSound(location, config.sound().stop(), 1f, 1);
   }
 }

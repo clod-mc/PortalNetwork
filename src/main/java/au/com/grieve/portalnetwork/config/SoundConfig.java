@@ -20,22 +20,24 @@ package au.com.grieve.portalnetwork.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.bukkit.Sound;
 
-@SuppressWarnings("CanBeFinal")
-@AllArgsConstructor
-@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
-@ToString
-public class SoundConfig {
-  @JsonDeserialize(using = Converter.SoundDeserializer.class)
-  private Sound start = Sound.BLOCK_BEACON_ACTIVATE;
+public record SoundConfig(
+    @JsonDeserialize(using = Converter.SoundDeserializer.class) Sound start,
+    @JsonDeserialize(using = Converter.SoundDeserializer.class) Sound stop) {
+  public SoundConfig(Sound start, Sound stop) {
+    this.start = start;
+    this.stop = stop;
+  }
 
-  @JsonDeserialize(using = Converter.SoundDeserializer.class)
-  private Sound stop = Sound.BLOCK_BEACON_DEACTIVATE;
+  @Override
+  public Sound start() {
+    return this.start;
+  }
+
+  @Override
+  public Sound stop() {
+    return this.stop;
+  }
 }
