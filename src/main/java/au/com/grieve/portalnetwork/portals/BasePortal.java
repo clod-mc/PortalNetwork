@@ -35,10 +35,6 @@ import org.bukkit.Tag;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
@@ -49,7 +45,6 @@ import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
 public class BasePortal {
-
   public static final NamespacedKey PortalTypeKey =
       new NamespacedKey(PortalNetwork.getInstance(), "portal_type");
 
@@ -230,7 +225,6 @@ public class BasePortal {
   }
 
   // Return Portal height
-  @SuppressWarnings("unused")
   public int getHeight() {
     if (!valid) {
       return 1;
@@ -294,11 +288,12 @@ public class BasePortal {
     activate();
   }
 
-  /** Dial next available address, otherwise we deactivate. */
-  @SuppressWarnings("UnusedReturnValue")
-  public boolean dialNext() {
+  /**
+   * Dial next available address, otherwise we deactivate.
+   */
+  public void dialNext() {
     if (!valid) {
-      return false;
+      return;
     }
 
     int startAddress = dialledPortal == null ? 16 : dialledPortal.getAddress();
@@ -316,13 +311,12 @@ public class BasePortal {
       }
 
       if (dial(checkAddress)) {
-        return true;
+        return;
       }
     }
 
     // Deactivate
     dial(null);
-    return true;
   }
 
   /** Return an iterator over the portal part of the portal */
@@ -704,7 +698,6 @@ public class BasePortal {
 
     player.setVelocity(pv.velocity());
     player.teleport(pv.location());
-    // event.setTo(pv.getLocation());
 
     if (insideVehicle) {
       vehicle.teleport(pv.location());
@@ -743,8 +736,7 @@ public class BasePortal {
     }.runTaskLater(PortalNetwork.getInstance(), 3);
   }
 
-  @SuppressWarnings("unused")
-  public void handleBlockBurn(BlockBurnEvent event) {
+  public void handleBlockBurn() {
     dial(null);
     new BukkitRunnable() {
       @Override
@@ -755,8 +747,7 @@ public class BasePortal {
     }.runTaskLater(PortalNetwork.getInstance(), 3);
   }
 
-  @SuppressWarnings("unused")
-  public void handleBlockExplode(BlockExplodeEvent event) {
+  public void handleBlockExplode() {
     dial(null);
     new BukkitRunnable() {
       @Override
@@ -767,8 +758,7 @@ public class BasePortal {
     }.runTaskLater(PortalNetwork.getInstance(), 3);
   }
 
-  @SuppressWarnings("unused")
-  public void handleBlockIgnite(BlockIgniteEvent event) {
+  public void handleBlockIgnite() {
     dial(null);
     new BukkitRunnable() {
       @Override
@@ -779,8 +769,7 @@ public class BasePortal {
     }.runTaskLater(PortalNetwork.getInstance(), 3);
   }
 
-  @SuppressWarnings("unused")
-  public void handleBlockPlace(BlockPlaceEvent event) {
+  public void handleBlockPlace() {
     dial(null);
     update();
     manager.save();

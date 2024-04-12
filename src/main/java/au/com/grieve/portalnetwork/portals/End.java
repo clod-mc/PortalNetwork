@@ -31,7 +31,6 @@ import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
 
 public class End extends BasePortal {
-
   public End(PortalManager manager, Location location, PortalConfig config) {
     super(manager, location, config);
   }

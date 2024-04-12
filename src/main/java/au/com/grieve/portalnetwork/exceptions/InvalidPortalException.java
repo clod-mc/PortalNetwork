@@ -19,7 +19,6 @@
 package au.com.grieve.portalnetwork.exceptions;
 
 public class InvalidPortalException extends Exception {
-
   public InvalidPortalException(String message) {
     super(message);
   }

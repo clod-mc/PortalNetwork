@@ -25,9 +25,9 @@ import java.io.IOException;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
+@SuppressWarnings("unused")
 public class Converter {
   public static class MaterialDeserializer extends JsonDeserializer<Material> {
-
     @Override
     public Material deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
       Material result = Material.getMaterial(p.getValueAsString());
@@ -39,7 +39,6 @@ public class Converter {
   }
 
   public static class SoundDeserializer extends JsonDeserializer<Sound> {
-
     @Override
     public Sound deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
       try {

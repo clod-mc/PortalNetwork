@@ -27,7 +27,6 @@ import org.bukkit.block.Block;
 import org.bukkit.util.BlockVector;
 
 public class Hidden extends BasePortal {
-
   public Hidden(PortalManager manager, Location location, PortalConfig config) {
     super(manager, location, config);
   }

@@ -52,7 +52,6 @@ import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
 public class PortalEvents implements Listener {
-
   final Map<Entity, BlockVector> ignore = new HashMap<>();
 
   // Stop burning portal
@@ -61,7 +60,7 @@ public class PortalEvents implements Listener {
     PortalManager manager = PortalNetwork.getInstance().getPortalManager();
     BasePortal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
-      portal.handleBlockBurn(event);
+      portal.handleBlockBurn();
     }
   }
 
@@ -71,7 +70,7 @@ public class PortalEvents implements Listener {
     PortalManager manager = PortalNetwork.getInstance().getPortalManager();
     BasePortal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
-      portal.handleBlockExplode(event);
+      portal.handleBlockExplode();
     }
   }
 
@@ -81,11 +80,10 @@ public class PortalEvents implements Listener {
     PortalManager manager = PortalNetwork.getInstance().getPortalManager();
     BasePortal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
-      portal.handleBlockIgnite(event);
+      portal.handleBlockIgnite();
     }
   }
 
-  @SuppressWarnings("unused")
   @EventHandler(ignoreCancelled = true)
   public void onBlockBreakEvent(BlockBreakEvent event) {
     PortalManager manager = PortalNetwork.getInstance().getPortalManager();
@@ -130,7 +128,6 @@ public class PortalEvents implements Listener {
     portal.handleBlockBreak(event);
   }
 
-  @SuppressWarnings("unused")
   @EventHandler
   public void onPlayerInteractEvent(PlayerInteractEvent event) {
     // Ignore if player is sneaking
@@ -162,13 +159,11 @@ public class PortalEvents implements Listener {
     event.getPlayer().discoverRecipes(manager.getRecipes());
   }
 
-  @SuppressWarnings("unused")
   @EventHandler
   public void onPlayerQuitEvent(PlayerQuitEvent event) {
     ignore.remove(event.getPlayer());
   }
 
-  @SuppressWarnings("unused")
   @EventHandler(ignoreCancelled = true)
   public void onPlayerMoveEvent(PlayerMoveEvent event) {
     // If ignored player has moved enough we stop ignoring
@@ -280,7 +275,6 @@ public class PortalEvents implements Listener {
   }
 
   // Probably should move this inside nether portal class
-  @SuppressWarnings("unused")
   @EventHandler(priority = EventPriority.LOW)
   public void onPlayerPortalEvent(PlayerPortalEvent event) {
     if (event.isCancelled()) {
@@ -301,16 +295,10 @@ public class PortalEvents implements Listener {
       return;
     }
 
-    //        // Make sure portal is dialled
-    //        if (portal.getDialledPortal() == null) {
-    //            return;
-    //        }
-
     // Cancel event
     event.setCancelled(true);
   }
 
-  @SuppressWarnings("unused")
   @EventHandler(ignoreCancelled = true)
   public void onBlockPlaceEvent(BlockPlaceEvent event) {
     // Ignore if player is sneaking
@@ -344,6 +332,6 @@ public class PortalEvents implements Listener {
       return;
     }
 
-    portal.handleBlockPlace(event);
+    portal.handleBlockPlace();
   }
 }

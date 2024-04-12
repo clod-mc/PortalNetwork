@@ -34,7 +34,6 @@ import org.bukkit.inventory.ItemStack;
 
 public class GiveCommand {
   public static CommandAPICommand build() {
-
     return new CommandAPICommand("give")
         .withShortDescription("Give player a portal block")
         .withOptionalArguments(new PlayerArgument("player"))

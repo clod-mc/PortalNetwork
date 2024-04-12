@@ -53,6 +53,7 @@ public final class PortalNetwork extends JavaPlugin {
   private PortalManager portalManager;
   private Config configuration;
 
+  @SuppressWarnings("unused")
   public PortalNetwork() {
     instance = this;
   }

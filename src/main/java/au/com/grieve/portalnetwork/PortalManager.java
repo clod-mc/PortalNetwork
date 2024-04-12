@@ -188,7 +188,6 @@ public class PortalManager {
   }
 
   /** Create a new portal */
-  @SuppressWarnings("UnusedReturnValue")
   public BasePortal createPortal(String portalType, Location location)
       throws InvalidPortalException {
     if (!portalClasses.containsKey(portalType)) {
@@ -212,7 +211,6 @@ public class PortalManager {
     }
 
     portals.add(portal);
-    // reindexPortal(portal);
     return portal;
   }
 

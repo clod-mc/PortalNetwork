@@ -29,7 +29,6 @@ import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
 
 public class Nether extends BasePortal {
-
   public Nether(PortalManager manager, Location location, PortalConfig config) {
     super(manager, location, config);
   }

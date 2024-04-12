@@ -1,4 +1,4 @@
-.PHONY: format docs
+.PHONY: format docs test
 
 java-files := $(shell find src -name '*.java')
 config-files := $(shell find src -name '*.yml') build.gradle settings.gradle
@@ -14,6 +14,9 @@ build/format: $(java-files) $(config-files)
 	@mkdir -p build
 	./gradlew :spotlessApply
 	@touch $@
+
+test:
+	./gradlew check
 
 docs: venv
 	venv/bin/mkdocs build
