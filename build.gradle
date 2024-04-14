@@ -25,6 +25,7 @@ dependencies {
 group = 'au.com.grieve'
 version = './src/build/version.py'.execute().text.trim()
 description = 'PortalNetwork'
+archivesBaseName = "${description}-Clod"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 shadowJar {
@@ -50,6 +51,15 @@ spotless {
     java {
         googleJavaFormat('1.19.2').reflowLongStrings().skipJavadocFormatting()
         formatAnnotations()
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
     }
 }
 

@@ -16,7 +16,7 @@ def main() -> None:
     timestamp = int(p.stdout.strip())
     dt = datetime.datetime.fromtimestamp(timestamp + 60 * 60 * 8, datetime.timezone.utc)
     # date+hh:mm pretending to be a version string
-    print(f'Clod-{dt.strftime("%y.%m%d.%H%M")}')
+    print(dt.strftime("%y.%m%d.%H%M"))
 
 
 try:

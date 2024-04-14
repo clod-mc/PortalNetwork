@@ -1,6 +1,6 @@
 name: PortalNetwork
-version: 1.4.0-dev
+version: '${version}'
 main: au.com.grieve.portalnetwork.PortalNetwork
 api-version: "1.13"
-authors: [Bundabrg]
-description: Allow one to create portals that can easily be linked to each other using colors.
+authors: [Bundabrg,Glob]
+description: Allow one to create portals that can easily be linked to each other using colours.
