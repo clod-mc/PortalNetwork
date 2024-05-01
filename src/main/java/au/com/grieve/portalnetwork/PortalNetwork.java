@@ -63,7 +63,7 @@ public final class PortalNetwork extends JavaPlugin {
   @Override
   public void onLoad() {
     // Register Commands
-    CommandAPI.onLoad(new CommandAPIBukkitConfig(this).verboseOutput(true));
+    CommandAPI.onLoad(new CommandAPIBukkitConfig(this));
     MainCommand.register();
   }
 
