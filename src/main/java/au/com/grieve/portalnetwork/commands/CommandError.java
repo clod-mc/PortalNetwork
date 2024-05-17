@@ -18,17 +18,8 @@
 
 package au.com.grieve.portalnetwork.commands;
 
-import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.executors.CommandArguments;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-
-public class HelpCommand {
-  public static CommandAPICommand build() {
-    return new CommandAPICommand("help")
-        .withShortDescription("Help")
-        .executes(
-            (CommandSender sender, CommandArguments args) ->
-                Bukkit.dispatchCommand(sender, "help portalnetwork"));
+public class CommandError extends Exception {
+  public CommandError(String message) {
+    super(message);
   }
 }

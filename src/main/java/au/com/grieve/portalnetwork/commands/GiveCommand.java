@@ -20,72 +20,82 @@ package au.com.grieve.portalnetwork.commands;
 
 import au.com.grieve.portalnetwork.PortalNetwork;
 import au.com.grieve.portalnetwork.exceptions.InvalidPortalException;
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.PlayerArgument;
-import dev.jorel.commandapi.arguments.StringArgument;
-import dev.jorel.commandapi.executors.CommandArguments;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.stream.Stream;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-public class GiveCommand {
-  public static CommandAPICommand build() {
-    return new CommandAPICommand("give")
-        .withShortDescription("Give player a portal block")
-        .withOptionalArguments(new PlayerArgument("player"))
-        .withOptionalArguments(new StringArgument("type"))
-        .executes(
-            (CommandSender sender, CommandArguments args) -> {
-              if (!(sender instanceof ConsoleCommandSender || sender instanceof Player)) {
-                return;
-              }
+public class GiveCommand implements SimpleCommand {
+  @Override
+  public void execute(@NotNull CommandSender sender, @NotNull String[] args) throws CommandError {
+    if (args.length > 2) {
+      throw new CommandError("Unexpected argument(s)");
+    }
 
-              // player arg
-              Player player;
-              if (args.getOptional("player").isEmpty()) {
-                if (sender instanceof ConsoleCommandSender) {
-                  throw CommandAPI.failWithString("When console a player name is required");
-                }
-                player = (Player) args.getOrDefault("player", sender);
-              } else {
-                player = (Player) args.get("player");
-              }
-              assert player != null;
+    Player player;
+    if (args.length == 0 || args[0].isEmpty() || args[0].equals("@p")) {
+      if (!(sender instanceof Player)) {
+        throw new CommandError("player name required");
+      }
+      player = (Player) sender;
+    } else {
+      player = Bukkit.getPlayerExact(args[1]);
+      if (player == null) {
+        throw new CommandError("Unknown player: " + args[1]);
+      }
+    }
 
-              // type arg
-              String type =
-                  ((String) args.getOrDefault("type", "nether")).toLowerCase(Locale.ENGLISH);
-              List<String> types =
-                  PortalNetwork.getInstance()
-                      .getPortalManager()
-                      .getPortalClasses()
-                      .keySet()
-                      .stream()
-                      .map((s) -> s.toLowerCase(Locale.ENGLISH))
-                      .toList();
-              if (!types.contains(type)) {
-                throw CommandAPI.failWithString(
-                    "Invalid Portal Type: " + args.getOrDefault("type", "?"));
-              }
+    String type = "nether";
+    if (args.length == 2) {
+      type = args[1];
+      List<String> types =
+          PortalNetwork.instance.getPortalManager().getPortalClasses().keySet().stream()
+              .map(String::toLowerCase)
+              .toList();
+      if (!types.contains(type)) {
+        throw new CommandError("Invalid portal type: " + type);
+      }
+    }
 
-              // give
-              try {
-                ItemStack item =
-                    PortalNetwork.getInstance().getPortalManager().createPortalBlock(type);
-                player.getInventory().addItem(item);
+    try {
+      ItemStack item = PortalNetwork.instance.getPortalManager().createPortalBlock(type);
+      player.getInventory().addItem(item);
 
-                if (!sender.equals(player)) {
-                  CommandUtil.sendMessage(player, "You have received a Portal Block");
-                } else {
-                  CommandUtil.sendMessage(sender, "Giving " + player.getName() + " a Portal Block");
-                }
-              } catch (InvalidPortalException e) {
-                throw CommandAPI.failWithString(e.getMessage());
-              }
-            });
+      if (!sender.equals(player)) {
+        player.sendRichMessage("<yellow>You have received a Portal Block");
+      } else {
+        sender.sendRichMessage("<yellow>Giving " + player.getName() + " a Portal Block");
+      }
+    } catch (InvalidPortalException e) {
+      throw new CommandError(e.getMessage());
+    }
+  }
+
+  @Override
+  public List<String> complete(@NotNull String[] args) {
+    if (args.length <= 1) {
+      ArrayList<String> playerNames =
+          new ArrayList<>(
+              Bukkit.getOnlinePlayers().stream()
+                  .map(Player::getName)
+                  .map(String::toLowerCase)
+                  .toList());
+      playerNames.add("@p");
+      String prefix = args.length == 0 ? "" : args[0].toLowerCase();
+      return playerNames.stream()
+          .filter(name -> name.startsWith(prefix))
+          .sorted(String::compareToIgnoreCase)
+          .toList();
+    }
+    if (args.length == 2) {
+      return Stream.of("nether", "end", "hidden")
+          .filter(name -> name.startsWith(args[1].toLowerCase()))
+          .toList();
+    }
+    return List.of();
   }
 }

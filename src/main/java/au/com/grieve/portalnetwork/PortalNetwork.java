@@ -18,7 +18,7 @@
 
 package au.com.grieve.portalnetwork;
 
-import au.com.grieve.portalnetwork.commands.MainCommand;
+import au.com.grieve.portalnetwork.commands.CommandDispatch;
 import au.com.grieve.portalnetwork.config.BlockConfig;
 import au.com.grieve.portalnetwork.config.Config;
 import au.com.grieve.portalnetwork.config.ItemConfig;
@@ -29,47 +29,36 @@ import au.com.grieve.portalnetwork.listeners.PortalEvents;
 import au.com.grieve.portalnetwork.portals.End;
 import au.com.grieve.portalnetwork.portals.Hidden;
 import au.com.grieve.portalnetwork.portals.Nether;
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class PortalNetwork extends JavaPlugin {
-  private static PortalNetwork instance;
+  public static PortalNetwork instance;
 
   private final File configFile = new File(getDataFolder(), "config.yml");
   private PortalManager portalManager;
   private Config configuration;
 
-  @SuppressWarnings("unused")
   public PortalNetwork() {
     instance = this;
   }
 
-  public static PortalNetwork getInstance() {
-    return PortalNetwork.instance;
-  }
-
-  @Override
-  public void onLoad() {
-    // Register Commands
-    CommandAPI.onLoad(new CommandAPIBukkitConfig(this));
-    MainCommand.register();
-  }
-
   @Override
   public void onEnable() {
-    CommandAPI.onEnable();
+    this.getServer().getCommandMap().register("pn", new CommandDispatch());
 
     // Initialize Configs
     try {
@@ -79,7 +68,7 @@ public final class PortalNetwork extends JavaPlugin {
     }
 
     // Load Portal Manager
-    portalManager = new PortalManager(this);
+    portalManager = new PortalManager();
     portalManager.registerPortalClass(
         "nether",
         Nether.class,
@@ -140,7 +129,7 @@ public final class PortalNetwork extends JavaPlugin {
         // Register Listeners
         getServer().getPluginManager().registerEvents(new PortalEvents(), PortalNetwork.this);
       }
-    }.runTaskLater(PortalNetwork.getInstance(), 5);
+    }.runTaskLater(this, 5);
   }
 
   @Override
@@ -149,7 +138,11 @@ public final class PortalNetwork extends JavaPlugin {
     if (portalManager != null) {
       portalManager.clear();
     }
-    CommandAPI.onDisable();
+    CommandMap commandMap = this.getServer().getCommandMap();
+    Command command = commandMap.getCommand("pn");
+    if (command != null) {
+      command.unregister(commandMap);
+    }
   }
 
   private void initConfig() throws IOException {
@@ -173,5 +166,20 @@ public final class PortalNetwork extends JavaPlugin {
 
   public PortalManager getPortalManager() {
     return this.portalManager;
+  }
+
+  // logging
+
+  public static void logWarning(String message) {
+    instance.getLogger().warning(message);
+  }
+
+  public static void logError(Throwable e) {
+    instance
+        .getLogger()
+        .log(
+            Level.SEVERE,
+            e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(),
+            e);
   }
 }

@@ -18,26 +18,12 @@
 
 package au.com.grieve.portalnetwork.commands;
 
-import au.com.grieve.portalnetwork.PortalNetwork;
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.executors.CommandArguments;
-import java.io.IOException;
-import net.md_5.bungee.api.ChatColor;
+import java.util.List;
 import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
 
-public class ReloadCommand {
-  public static CommandAPICommand build() {
-    return new CommandAPICommand("reload")
-        .withShortDescription("Reload Plugin")
-        .executes(
-            (CommandSender sender, CommandArguments args) -> {
-              try {
-                PortalNetwork.getInstance().reload();
-                CommandUtil.sendMessage(sender, ChatColor.YELLOW, "Reloaded PortalNetwork");
-              } catch (IOException e) {
-                throw CommandAPI.failWithString("Failed to reload PortalNetwork");
-              }
-            });
-  }
+public interface SimpleCommand {
+  void execute(@NotNull CommandSender sender, @NotNull String[] args) throws CommandError;
+
+  List<String> complete(@NotNull String[] args);
 }

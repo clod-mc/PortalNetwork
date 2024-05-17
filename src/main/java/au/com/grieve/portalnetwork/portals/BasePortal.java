@@ -46,7 +46,7 @@ import org.bukkit.util.Vector;
 
 public class BasePortal {
   public static final NamespacedKey PortalTypeKey =
-      new NamespacedKey(PortalNetwork.getInstance(), "portal_type");
+      new NamespacedKey(PortalNetwork.instance, "portal_type");
 
   // Portal Manager
   final PortalManager manager;
@@ -555,7 +555,6 @@ public class BasePortal {
       return;
     }
     // If its not our base we are not interested
-    //noinspection UnstableApiUsage
     if (Streams.stream(getPortalBaseIterator())
         .noneMatch(
             l -> event.getClickedBlock().getLocation().toVector().toBlockVector().equals(l))) {
@@ -669,10 +668,6 @@ public class BasePortal {
   }
 
   public void handlePlayerMove(PlayerMoveEvent event) {
-    if (event.getTo() == null) {
-      return;
-    }
-
     if (getDialledPortal() == null) {
       return;
     }
@@ -709,7 +704,7 @@ public class BasePortal {
             vehicle.addPassenger(passenger);
           }
         }
-      }.runTaskLater(PortalNetwork.getInstance(), 1);
+      }.runTaskLater(PortalNetwork.instance, 1);
     }
   }
 
@@ -737,7 +732,6 @@ public class BasePortal {
 
   public void handleBlockBreak(BlockBreakEvent event) {
     // If it's the frame we cancel drops
-    //noinspection UnstableApiUsage
     if (Streams.stream(getPortalFrameIterator())
         .anyMatch(l -> event.getBlock().getLocation().toVector().toBlockVector().equals(l))) {
       event.setDropItems(false);
@@ -751,7 +745,7 @@ public class BasePortal {
         update();
         manager.save();
       }
-    }.runTaskLater(PortalNetwork.getInstance(), 3);
+    }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockBurn() {
@@ -762,7 +756,7 @@ public class BasePortal {
         update();
         manager.save();
       }
-    }.runTaskLater(PortalNetwork.getInstance(), 3);
+    }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockExplode() {
@@ -773,7 +767,7 @@ public class BasePortal {
         update();
         manager.save();
       }
-    }.runTaskLater(PortalNetwork.getInstance(), 3);
+    }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockIgnite() {
@@ -784,7 +778,7 @@ public class BasePortal {
         update();
         manager.save();
       }
-    }.runTaskLater(PortalNetwork.getInstance(), 3);
+    }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockPlace() {

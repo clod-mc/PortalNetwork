@@ -36,9 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.stream.Stream;
-import org.bukkit.Bukkit;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -49,7 +48,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +56,6 @@ public class PortalManager {
   private final BiMap<String, Class<? extends BasePortal>> portalClasses = HashBiMap.create();
 
   private final Map<String, PortalConfig> portalConfig = new HashMap<>();
-
-  private final JavaPlugin plugin;
 
   // Portals
   private final List<BasePortal> portals = new ArrayList<>();
@@ -72,11 +68,6 @@ public class PortalManager {
 
   // Recipes
   private final List<NamespacedKey> recipes = new ArrayList<>();
-
-  // Configuration
-  public PortalManager(JavaPlugin plugin) {
-    this.plugin = plugin;
-  }
 
   /**
    * Register a new Portal Class
@@ -94,13 +85,13 @@ public class PortalManager {
       RecipeConfig r = config.recipe();
       try {
         ItemStack item = createPortalBlock(name);
-        NamespacedKey key = new NamespacedKey(plugin, name);
+        NamespacedKey key = new NamespacedKey(PortalNetwork.instance, name);
         ShapedRecipe recipe = new ShapedRecipe(key, item);
         recipe.shape(r.items().toArray(new String[0]));
         for (Map.Entry<Character, Material> ingredient : r.mapping().entrySet()) {
           recipe.setIngredient(ingredient.getKey(), ingredient.getValue());
         }
-        plugin.getServer().addRecipe(recipe);
+        PortalNetwork.instance.getServer().addRecipe(recipe);
         recipes.add(key);
       } catch (InvalidPortalException e) {
         // ignored
@@ -119,13 +110,12 @@ public class PortalManager {
     // Portal Data
     YamlConfiguration portalConfig = new YamlConfiguration();
     try {
-      portalConfig.load(new File(plugin.getDataFolder(), "portal-data.yml"));
+      portalConfig.load(new File(PortalNetwork.instance.getDataFolder(), "portal-data.yml"));
     } catch (FileNotFoundException e) {
       // ignored
     } catch (IOException | InvalidConfigurationException e) {
-      plugin
-          .getLogger()
-          .warning("Failed to load 'portal-data.yml'. Ignoring but portal data may be lost");
+      PortalNetwork.logWarning(
+          "Failed to load 'portal-data.yml'. Ignoring but portal data may be lost");
     }
 
     // Initialize all portals
@@ -144,7 +134,7 @@ public class PortalManager {
           portal =
               createPortal(portalData.getString("portal_type"), portalData.getLocation("location"));
         } catch (InvalidPortalException e) {
-          Bukkit.getLogger().log(Level.SEVERE, e.getMessage(), e);
+          PortalNetwork.logError(e);
           continue;
         }
 
@@ -177,11 +167,10 @@ public class PortalManager {
     }
 
     try {
-      portalConfig.save(new File(plugin.getDataFolder(), "portal-data.yml"));
+      portalConfig.save(new File(PortalNetwork.instance.getDataFolder(), "portal-data.yml"));
     } catch (IOException e) {
-      plugin
-          .getLogger()
-          .warning("Failed to save 'portal-data.yml'. Ignoring but portal data may be lost");
+      PortalNetwork.logWarning(
+          "Failed to save 'portal-data.yml'. Ignoring but portal data may be lost");
     }
   }
 
@@ -204,7 +193,7 @@ public class PortalManager {
         | InstantiationException
         | InvocationTargetException
         | IllegalAccessException e) {
-      Bukkit.getLogger().log(Level.SEVERE, e.getMessage(), e);
+      PortalNetwork.logError(e);
       throw new InvalidPortalException("Unable to create portal");
     }
 
@@ -237,7 +226,7 @@ public class PortalManager {
     ItemMeta meta = item.getItemMeta();
 
     assert meta != null;
-    meta.setDisplayName(pc.item().name());
+    meta.displayName(Component.text(pc.item().name()));
     meta.getPersistentDataContainer()
         .set(BasePortal.PortalTypeKey, PersistentDataType.STRING, portalType);
     item.setItemMeta(meta);
