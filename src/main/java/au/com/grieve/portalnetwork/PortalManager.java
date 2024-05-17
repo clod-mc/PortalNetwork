@@ -101,7 +101,7 @@ public class PortalManager {
 
   public void clear() {
     while (!portals.isEmpty()) {
-      BasePortal portal = portals.remove(0);
+      BasePortal portal = portals.removeFirst();
       portal.remove();
     }
   }

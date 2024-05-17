@@ -62,7 +62,7 @@ public final class PortalNetwork extends JavaPlugin {
             new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
             new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
             new RecipeConfig(
-                Stream.of(new String[] {"OOP", "ONO", "OOO"}).collect(Collectors.toList()),
+                Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_INGOT,
                     'O', Material.OBSIDIAN,
@@ -75,7 +75,7 @@ public final class PortalNetwork extends JavaPlugin {
             new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
             new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
             new RecipeConfig(
-                Stream.of(new String[] {"EEP", "ENE", "EEE"}).collect(Collectors.toList()),
+                Stream.of("EEP", "ENE", "EEE").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_INGOT,
                     'E', Material.END_STONE,
@@ -88,7 +88,7 @@ public final class PortalNetwork extends JavaPlugin {
             new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
             new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
             new RecipeConfig(
-                Stream.of(new String[] {"OOP", "ONO", "OOO"}).collect(Collectors.toList()),
+                Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_BLOCK,
                     'O', Material.OBSIDIAN,
