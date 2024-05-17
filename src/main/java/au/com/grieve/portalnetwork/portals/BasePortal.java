@@ -708,10 +708,6 @@ public class BasePortal {
     }
   }
 
-  public PortalConfig getConfig() {
-    return this.config;
-  }
-
   public Integer getNetwork() {
     return this.network;
   }

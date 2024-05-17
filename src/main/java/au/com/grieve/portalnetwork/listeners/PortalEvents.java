@@ -174,8 +174,7 @@ public class PortalEvents implements Listener {
     }
 
     // If player has not actually moved, ignore
-    if (event.getTo() == null
-        || event.getFrom().toVector().toBlockVector() == event.getTo().toVector().toBlockVector()) {
+    if (event.getFrom().toVector().toBlockVector() == event.getTo().toVector().toBlockVector()) {
       return;
     }
 

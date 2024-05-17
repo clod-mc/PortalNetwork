@@ -1,7 +1,6 @@
 plugins {
     id 'java-library'
     id 'com.diffplug.spotless' version '6.25.0'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'checkstyle'
 }
 
@@ -12,13 +11,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2'
     compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     compileOnly 'org.jetbrains:annotations:15.0'
-
-    shadow 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-    shadow 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2'
 }
 
 group = 'au.com.grieve'
@@ -27,15 +21,6 @@ description = 'PortalNetwork'
 java.sourceCompatibility = JavaVersion.VERSION_17
 base {
     archivesName = "${description}-Clod"
-}
-
-shadowJar {
-    archiveClassifier.set('')
-    enableRelocation true
-    minimize()
-}
-tasks.named('build') {
-    dependsOn('shadowJar')
 }
 
 tasks.withType(JavaCompile).configureEach {

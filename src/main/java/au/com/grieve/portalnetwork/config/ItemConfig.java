@@ -1,6 +1,6 @@
 /*
  * PortalNetwork - Portals for Players
- * Copyright (C) 2022 PortalNetwork Developers
+ * Copyright (C) 2024 PortalNetwork Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,20 +18,6 @@
 
 package au.com.grieve.portalnetwork.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bukkit.Material;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public record ItemConfig(
-    @JsonDeserialize(using = Converter.MaterialDeserializer.class) Material block, String name) {
-  public ItemConfig(Material block, String name) {
-    this.block = block;
-    this.name = name;
-  }
-
-  @Override
-  public Material block() {
-    return this.block;
-  }
-}
+public record ItemConfig(Material block, String name) {}

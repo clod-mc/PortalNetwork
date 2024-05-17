@@ -1,6 +1,6 @@
 /*
  * PortalNetwork - Portals for Players
- * Copyright (C) 2022 PortalNetwork Developers
+ * Copyright (C) 2024 PortalNetwork Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +18,6 @@
 
 package au.com.grieve.portalnetwork.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.bukkit.Sound;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public record SoundConfig(
-    @JsonDeserialize(using = Converter.SoundDeserializer.class) Sound start,
-    @JsonDeserialize(using = Converter.SoundDeserializer.class) Sound stop) {
-  public SoundConfig(Sound start, Sound stop) {
-    this.start = start;
-    this.stop = stop;
-  }
-
-  @Override
-  public Sound start() {
-    return this.start;
-  }
-
-  @Override
-  public Sound stop() {
-    return this.stop;
-  }
-}
+public record SoundConfig(Sound start, Sound stop) {}
