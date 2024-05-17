@@ -18,8 +18,8 @@
 
 package au.com.grieve.portalnetwork.commands;
 
+import au.com.grieve.portalnetwork.InvalidPortalException;
 import au.com.grieve.portalnetwork.PortalNetwork;
-import au.com.grieve.portalnetwork.exceptions.InvalidPortalException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;

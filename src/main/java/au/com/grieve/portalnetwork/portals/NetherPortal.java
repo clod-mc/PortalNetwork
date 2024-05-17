@@ -18,8 +18,7 @@
 
 package au.com.grieve.portalnetwork.portals;
 
-import au.com.grieve.portalnetwork.PortalManager;
-import au.com.grieve.portalnetwork.config.PortalConfig;
+import au.com.grieve.portalnetwork.PortalConfig;
 import java.util.Iterator;
 import org.bukkit.Axis;
 import org.bukkit.Location;
@@ -28,14 +27,12 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
 
-public class Nether extends BasePortal {
-  public Nether(PortalManager manager, Location location, PortalConfig config) {
-    super(manager, location, config);
+public class NetherPortal extends Portal {
+  public NetherPortal(Location location, PortalConfig config) {
+    super(location, config);
   }
 
-  /**
-   * Activate Portal using type of portal as to what is seen/heard
-   */
+  // Activate Portal using type of portal as to what is seen/heard
   @Override
   public void activate() {
     if (!valid || dialledPortal == null || location.getWorld() == null) {
@@ -76,9 +73,7 @@ public class Nether extends BasePortal {
     location.getWorld().playSound(location, config.sound().start(), 1f, 1);
   }
 
-  /**
-   * Deactivate Portal
-   */
+  // Deactivate Portal
   @Override
   public void deactivate() {
     if (location.getWorld() == null) {

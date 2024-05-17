@@ -19,15 +19,9 @@
 package au.com.grieve.portalnetwork;
 
 import au.com.grieve.portalnetwork.commands.CommandDispatch;
-import au.com.grieve.portalnetwork.config.BlockConfig;
-import au.com.grieve.portalnetwork.config.ItemConfig;
-import au.com.grieve.portalnetwork.config.PortalConfig;
-import au.com.grieve.portalnetwork.config.RecipeConfig;
-import au.com.grieve.portalnetwork.config.SoundConfig;
-import au.com.grieve.portalnetwork.listeners.PortalEvents;
-import au.com.grieve.portalnetwork.portals.End;
-import au.com.grieve.portalnetwork.portals.Hidden;
-import au.com.grieve.portalnetwork.portals.Nether;
+import au.com.grieve.portalnetwork.portals.EndPortal;
+import au.com.grieve.portalnetwork.portals.HiddenPortal;
+import au.com.grieve.portalnetwork.portals.NetherPortal;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -56,12 +50,13 @@ public final class PortalNetwork extends JavaPlugin {
     portalManager = new PortalManager();
     portalManager.registerPortalClass(
         "nether",
-        Nether.class,
+        NetherPortal.class,
         new PortalConfig(
-            new ItemConfig(Material.GOLD_BLOCK, "Portal Block (nether)"),
-            new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new RecipeConfig(
+            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (nether)"),
+            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+            new PortalConfig.SoundConfig(
+                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+            new PortalConfig.RecipeConfig(
                 Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_INGOT,
@@ -69,12 +64,13 @@ public final class PortalNetwork extends JavaPlugin {
                     'P', Material.ENDER_PEARL))));
     portalManager.registerPortalClass(
         "end",
-        End.class,
+        EndPortal.class,
         new PortalConfig(
-            new ItemConfig(Material.GOLD_BLOCK, "Portal Block (end)"),
-            new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new RecipeConfig(
+            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (end)"),
+            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+            new PortalConfig.SoundConfig(
+                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+            new PortalConfig.RecipeConfig(
                 Stream.of("EEP", "ENE", "EEE").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_INGOT,
@@ -82,12 +78,13 @@ public final class PortalNetwork extends JavaPlugin {
                     'P', Material.ENDER_PEARL))));
     portalManager.registerPortalClass(
         "hidden",
-        Hidden.class,
+        HiddenPortal.class,
         new PortalConfig(
-            new ItemConfig(Material.GOLD_BLOCK, "Portal Block (hidden)"),
-            new BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new SoundConfig(Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new RecipeConfig(
+            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (hidden)"),
+            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
+            new PortalConfig.SoundConfig(
+                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
+            new PortalConfig.RecipeConfig(
                 Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
                 Map.of(
                     'N', Material.NETHERITE_BLOCK,

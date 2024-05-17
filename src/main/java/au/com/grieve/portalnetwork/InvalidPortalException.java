@@ -16,7 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.portalnetwork.config;
+package au.com.grieve.portalnetwork;
 
-public record PortalConfig(
-    ItemConfig item, BlockConfig block, SoundConfig sound, RecipeConfig recipe) {}
+public class InvalidPortalException extends Exception {
+  public InvalidPortalException(String message) {
+    super(message);
+  }
+}

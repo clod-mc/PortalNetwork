@@ -1,6 +1,6 @@
 /*
  * PortalNetwork - Portals for Players
- * Copyright (C) 2021 PortalNetwork Developers
+ * Copyright (C) 2024 PortalNetwork Developers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.portalnetwork.listeners;
+package au.com.grieve.portalnetwork;
 
-import au.com.grieve.portalnetwork.PortalManager;
-import au.com.grieve.portalnetwork.PortalNetwork;
-import au.com.grieve.portalnetwork.exceptions.InvalidPortalException;
-import au.com.grieve.portalnetwork.portals.BasePortal;
+import au.com.grieve.portalnetwork.portals.Portal;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.GameMode;
@@ -56,7 +53,7 @@ public class PortalEvents implements Listener {
   @EventHandler(ignoreCancelled = true)
   public void onBlockBurnEvent(BlockBurnEvent event) {
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockBurn();
     }
@@ -66,7 +63,7 @@ public class PortalEvents implements Listener {
   @EventHandler(ignoreCancelled = true)
   public void onBlockExplodeEvent(BlockExplodeEvent event) {
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockExplode();
     }
@@ -76,7 +73,7 @@ public class PortalEvents implements Listener {
   @EventHandler(ignoreCancelled = true)
   public void onBlockIgniteEvent(BlockIgniteEvent event) {
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockIgnite();
     }
@@ -87,7 +84,7 @@ public class PortalEvents implements Listener {
     PortalManager manager = PortalNetwork.instance.getPortalManager();
 
     // Check if player is breaking a portal block
-    BasePortal portal = manager.getPortal(event.getBlock().getLocation());
+    Portal portal = manager.getPortal(event.getBlock().getLocation());
     if (portal == null) {
       // Check the rest of the portal
       portal = manager.find(event.getBlock().getLocation());
@@ -138,7 +135,7 @@ public class PortalEvents implements Listener {
     }
 
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getClickedBlock().getLocation());
+    Portal portal = manager.find(event.getClickedBlock().getLocation());
 
     if (portal == null) {
       return;
@@ -198,7 +195,7 @@ public class PortalEvents implements Listener {
     loc.setZ(Math.round(loc.getZ()));
 
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.findByPortal(loc);
+    Portal portal = manager.findByPortal(loc);
 
     if (portal == null) {
       return;
@@ -247,7 +244,7 @@ public class PortalEvents implements Listener {
     loc.setZ(Math.round(loc.getZ()));
 
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.findByPortal(loc);
+    Portal portal = manager.findByPortal(loc);
 
     if (portal == null) {
       return;
@@ -261,7 +258,7 @@ public class PortalEvents implements Listener {
   @EventHandler(priority = EventPriority.LOW)
   public void onEntityPortalEvent(EntityPortalEvent event) {
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getFrom(), 2);
+    Portal portal = manager.find(event.getFrom(), 2);
 
     if (portal == null) {
       return;
@@ -286,7 +283,7 @@ public class PortalEvents implements Listener {
     }
 
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getFrom(), 2);
+    Portal portal = manager.find(event.getFrom(), 2);
 
     if (portal == null) {
       return;
@@ -307,11 +304,9 @@ public class PortalEvents implements Listener {
     ItemMeta meta = event.getItemInHand().getItemMeta();
     if (meta != null) {
       meta.getPersistentDataContainer();
-      if (meta.getPersistentDataContainer()
-          .has(BasePortal.PortalTypeKey, PersistentDataType.STRING)) {
+      if (meta.getPersistentDataContainer().has(Portal.PortalTypeKey, PersistentDataType.STRING)) {
         String portalType =
-            meta.getPersistentDataContainer()
-                .get(BasePortal.PortalTypeKey, PersistentDataType.STRING);
+            meta.getPersistentDataContainer().get(Portal.PortalTypeKey, PersistentDataType.STRING);
         try {
           PortalNetwork.instance
               .getPortalManager()
@@ -323,7 +318,7 @@ public class PortalEvents implements Listener {
     }
 
     PortalManager manager = PortalNetwork.instance.getPortalManager();
-    BasePortal portal = manager.find(event.getBlock().getLocation(), 2);
+    Portal portal = manager.find(event.getBlock().getLocation(), 2);
 
     if (portal == null) {
       return;

@@ -18,9 +18,9 @@
 
 package au.com.grieve.portalnetwork.portals;
 
+import au.com.grieve.portalnetwork.PortalConfig;
 import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.PortalNetwork;
-import au.com.grieve.portalnetwork.config.PortalConfig;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +44,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-public class BasePortal {
+public class Portal {
   public static final NamespacedKey PortalTypeKey =
       new NamespacedKey(PortalNetwork.instance, "portal_type");
 
@@ -105,16 +105,16 @@ public class BasePortal {
   BlockVector left;
   BlockVector right;
   // Dialed
-  BasePortal dialledPortal;
+  Portal dialledPortal;
 
-  public BasePortal(PortalManager manager, Location location, PortalConfig config) {
-    this.manager = manager;
+  public Portal(Location location, PortalConfig config) {
+    this.manager = PortalNetwork.instance.getPortalManager();
     this.location = location;
     this.config = config;
     update();
   }
 
-  /** Load configuration from manager for this portal type */
+  // Load configuration from manager for this portal type
   public Location getLocation() {
     return location.clone();
   }
@@ -125,7 +125,7 @@ public class BasePortal {
     updateBlock();
   }
 
-  // Update Potal block based upon state
+  // Update Portal block based upon state
   protected void updateBlock() {
     if (valid) {
       if (dialledPortal != null) {
@@ -138,7 +138,7 @@ public class BasePortal {
     }
   }
 
-  /** Update Portal */
+  // Update Portal
   public void update() {
     // Check that wool only appears on 3 sides
     List<Location> blocks =
@@ -178,7 +178,7 @@ public class BasePortal {
             + WOOL_MAPPINGS.indexOf(rightBlock.getBlock().getType());
 
     // If address and network already exist pop out the address block
-    BasePortal p = manager.find(network, address);
+    Portal p = manager.find(network, address);
     if (p != null && p != this) {
       Material material = addressBlock.getBlock().getType();
       addressBlock.getBlock().setType(Material.AIR);
@@ -242,7 +242,7 @@ public class BasePortal {
       return false;
     }
 
-    BasePortal portal = manager.find(network, address);
+    Portal portal = manager.find(network, address);
     if (portal == null) {
       return false;
     }
@@ -251,7 +251,7 @@ public class BasePortal {
     return true;
   }
 
-  public void dial(BasePortal portal, BasePortal from) {
+  public void dial(Portal portal, Portal from) {
     if (portal == null) {
       if (dialledPortal == null) {
         return;
@@ -288,7 +288,7 @@ public class BasePortal {
     activate();
   }
 
-  /** Dial next available address, otherwise we deactivate. */
+  // Dial next available address, otherwise we deactivate.
   public void dialNext() {
     if (!valid) {
       return;
@@ -317,7 +317,7 @@ public class BasePortal {
     dial(null);
   }
 
-  /** Return an iterator over the portal part of the portal */
+  // Return an iterator over the portal part of the portal
   public Iterator<BlockVector> getPortalIterator() {
 
     final int maxWidth = getWidth();
@@ -389,7 +389,7 @@ public class BasePortal {
     };
   }
 
-  /** Return an iterator over the portal base */
+  // Return an iterator over the portal base
   public Iterator<BlockVector> getPortalBaseIterator() {
 
     final int maxWidth = getWidth();
@@ -450,7 +450,7 @@ public class BasePortal {
     };
   }
 
-  /** Return an iterator over the portal frame */
+  // Return an iterator over the portal frame
   public Iterator<BlockVector> getPortalFrameIterator() {
 
     final int maxWidth = getWidth();
@@ -540,12 +540,12 @@ public class BasePortal {
     };
   }
 
-  /** Activate Portal using type of portal as to what is seen/heard */
+  // Activate Portal using type of portal as to what is seen/heard
   public void activate() {
     throw new UnsupportedOperationException();
   }
 
-  /** Deactivate Portal */
+  // Deactivate Portal
   public void deactivate() {
     throw new UnsupportedOperationException();
   }
@@ -574,7 +574,7 @@ public class BasePortal {
     }
   }
 
-  /** Return new position and velocity of an entity to dialled portal */
+  // Return new position and velocity of an entity to dialled portal
   PositionVelocity calculatePosition(Entity entity) {
     if (getDialledPortal() == null) {
       return null;
@@ -720,7 +720,7 @@ public class BasePortal {
     return this.valid;
   }
 
-  public BasePortal getDialledPortal() {
+  public Portal getDialledPortal() {
     return this.dialledPortal;
   }
 
@@ -783,7 +783,7 @@ public class BasePortal {
     manager.save();
   }
 
-  /** Remove portal cleanly */
+  // Remove portal cleanly
   public void remove() {
     dial(null);
     deactivate();

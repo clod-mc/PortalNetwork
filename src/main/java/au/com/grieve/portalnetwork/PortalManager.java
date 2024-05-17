@@ -18,17 +18,15 @@
 
 package au.com.grieve.portalnetwork;
 
-import au.com.grieve.portalnetwork.config.PortalConfig;
-import au.com.grieve.portalnetwork.config.RecipeConfig;
-import au.com.grieve.portalnetwork.exceptions.InvalidPortalException;
-import au.com.grieve.portalnetwork.portals.BasePortal;
+import au.com.grieve.portalnetwork.portals.EndPortal;
+import au.com.grieve.portalnetwork.portals.HiddenPortal;
+import au.com.grieve.portalnetwork.portals.NetherPortal;
+import au.com.grieve.portalnetwork.portals.Portal;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -53,36 +51,31 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 public class PortalManager {
-  private final BiMap<String, Class<? extends BasePortal>> portalClasses = HashBiMap.create();
+  private final BiMap<String, Class<? extends Portal>> portalClasses = HashBiMap.create();
 
   private final Map<String, PortalConfig> portalConfig = new HashMap<>();
 
   // Portals
-  private final List<BasePortal> portals = new ArrayList<>();
+  private final List<Portal> portals = new ArrayList<>();
 
   // Location Maps
-  private final Hashtable<BlockVector, BasePortal> indexFrames = new Hashtable<>();
-  private final Hashtable<BlockVector, BasePortal> indexPortals = new Hashtable<>();
-  private final Hashtable<BlockVector, BasePortal> indexBases = new Hashtable<>();
-  private final Hashtable<BlockVector, BasePortal> indexPortalBlocks = new Hashtable<>();
+  private final Hashtable<BlockVector, Portal> indexFrames = new Hashtable<>();
+  private final Hashtable<BlockVector, Portal> indexPortals = new Hashtable<>();
+  private final Hashtable<BlockVector, Portal> indexBases = new Hashtable<>();
+  private final Hashtable<BlockVector, Portal> indexPortalBlocks = new Hashtable<>();
 
   // Recipes
   private final List<NamespacedKey> recipes = new ArrayList<>();
 
-  /**
-   * Register a new Portal Class
-   *
-   * @param name Name of Portal Type
-   * @param portalClass Class of Portal
-   */
+  // Register a new Portal Class
   public void registerPortalClass(
-      String name, Class<? extends BasePortal> portalClass, PortalConfig config) {
+      String name, Class<? extends Portal> portalClass, PortalConfig config) {
     portalClasses.put(name, portalClass);
     portalConfig.put(name, config);
 
     // Handle custom recipe
     if (config.recipe() != null) {
-      RecipeConfig r = config.recipe();
+      PortalConfig.RecipeConfig r = config.recipe();
       try {
         ItemStack item = createPortalBlock(name);
         NamespacedKey key = new NamespacedKey(PortalNetwork.instance, name);
@@ -101,7 +94,7 @@ public class PortalManager {
 
   public void clear() {
     while (!portals.isEmpty()) {
-      BasePortal portal = portals.removeFirst();
+      Portal portal = portals.removeFirst();
       portal.remove();
     }
   }
@@ -119,7 +112,7 @@ public class PortalManager {
     }
 
     // Initialize all portals
-    Map<BasePortal, Integer> dialed = new HashMap<>();
+    Map<Portal, Integer> dialed = new HashMap<>();
 
     ConfigurationSection portalsData = portalConfig.getConfigurationSection("portals");
     if (portalsData != null) {
@@ -129,7 +122,7 @@ public class PortalManager {
           continue;
         }
 
-        BasePortal portal;
+        Portal portal;
         try {
           portal =
               createPortal(portalData.getString("portal_type"), portalData.getLocation("location"));
@@ -145,7 +138,7 @@ public class PortalManager {
     }
 
     // Dial Portals
-    for (Map.Entry<BasePortal, Integer> dialedPortal : dialed.entrySet()) {
+    for (Map.Entry<Portal, Integer> dialedPortal : dialed.entrySet()) {
       dialedPortal.getKey().dial(dialedPortal.getValue());
     }
   }
@@ -155,7 +148,7 @@ public class PortalManager {
     YamlConfiguration portalConfig = new YamlConfiguration();
     ConfigurationSection portalsData = portalConfig.createSection("portals");
     for (int i = 0; i < portals.size(); i++) {
-      BasePortal portal = portals.get(i);
+      Portal portal = portals.get(i);
       ConfigurationSection portalData = portalsData.createSection(Integer.toString(i));
 
       if (portal.getDialledPortal() != null) {
@@ -174,34 +167,28 @@ public class PortalManager {
     }
   }
 
-  /** Create a new portal */
-  public BasePortal createPortal(String portalType, Location location)
-      throws InvalidPortalException {
+  // Create a new portal
+  public Portal createPortal(String portalType, Location location) throws InvalidPortalException {
+    if (portalType == null) {
+      throw new InvalidPortalException("Missing portal type");
+    }
+
+    Portal portal =
+        switch (portalType) {
+          case "end" -> new EndPortal(location, this.portalConfig.get(portalType));
+          case "nether" -> new NetherPortal(location, this.portalConfig.get(portalType));
+          case "hidden" -> new HiddenPortal(location, this.portalConfig.get(portalType));
+          default -> throw new InvalidPortalException("No such portal type");
+        };
+
     if (!portalClasses.containsKey(portalType)) {
       throw new InvalidPortalException("No such portal type");
     }
-
-    BasePortal portal;
-
-    try {
-      Constructor<? extends BasePortal> c =
-          portalClasses
-              .get(portalType)
-              .getConstructor(PortalManager.class, Location.class, PortalConfig.class);
-      portal = c.newInstance(this, location, this.portalConfig.get(portalType));
-    } catch (NoSuchMethodException
-        | InstantiationException
-        | InvocationTargetException
-        | IllegalAccessException e) {
-      PortalNetwork.logError(e);
-      throw new InvalidPortalException("Unable to create portal");
-    }
-
     portals.add(portal);
     return portal;
   }
 
-  public void removePortal(BasePortal portal) {
+  public void removePortal(Portal portal) {
     portals.remove(portal);
     indexFrames.values().removeIf(v -> v.equals(portal));
     indexPortals.values().removeIf(v -> v.equals(portal));
@@ -210,7 +197,7 @@ public class PortalManager {
   }
 
   // Create block based upon portal
-  public ItemStack createPortalBlock(BasePortal portal) throws InvalidPortalException {
+  public ItemStack createPortalBlock(Portal portal) throws InvalidPortalException {
     return createPortalBlock(getPortalClasses().inverse().get(portal.getClass()));
   }
 
@@ -228,12 +215,12 @@ public class PortalManager {
     assert meta != null;
     meta.displayName(Component.text(pc.item().name()));
     meta.getPersistentDataContainer()
-        .set(BasePortal.PortalTypeKey, PersistentDataType.STRING, portalType);
+        .set(Portal.PortalTypeKey, PersistentDataType.STRING, portalType);
     item.setItemMeta(meta);
     return item;
   }
 
-  public void reindexPortal(BasePortal portal) {
+  public void reindexPortal(Portal portal) {
     indexPortalBlocks.values().removeIf(v -> v.equals(portal));
     indexPortalBlocks.put(portal.getLocation().toVector().toBlockVector(), portal);
 
@@ -256,9 +243,9 @@ public class PortalManager {
     }
   }
 
-  /** Find a portal */
-  public BasePortal find(Integer network, Integer address, Boolean valid) {
-    for (BasePortal portal : portals) {
+  // Find a portal
+  public Portal find(Integer network, Integer address, Boolean valid) {
+    for (Portal portal : portals) {
       if (valid != null && portal.isValid() != valid) {
         continue;
       }
@@ -276,13 +263,13 @@ public class PortalManager {
     return null;
   }
 
-  public BasePortal find(Integer network, Integer address) {
+  public Portal find(Integer network, Integer address) {
     return find(network, address, null);
   }
 
-  /** Get a portal at location */
-  public BasePortal find(@NotNull BlockVector search, Boolean valid) {
-    BasePortal portal =
+  // Get a portal at location
+  public Portal find(@NotNull BlockVector search, Boolean valid) {
+    Portal portal =
         Stream.concat(
                 indexFrames.entrySet().stream(),
                 Stream.concat(indexPortals.entrySet().stream(), indexBases.entrySet().stream()))
@@ -299,10 +286,10 @@ public class PortalManager {
     return null;
   }
 
-  /** Get a portal at location */
-  public BasePortal find(@NotNull Location location, Boolean valid, int distance) {
+  // Get a portal at location
+  public Portal find(@NotNull Location location, Boolean valid, int distance) {
     BlockVector search = location.toVector().toBlockVector();
-    BasePortal portal;
+    Portal portal;
 
     // Check exact match
     portal = find(search, valid);
@@ -325,17 +312,17 @@ public class PortalManager {
     return null;
   }
 
-  public BasePortal find(@NotNull Location location) {
+  public Portal find(@NotNull Location location) {
     return find(location, null, 0);
   }
 
-  public BasePortal find(@NotNull Location location, int distance) {
+  public Portal find(@NotNull Location location, int distance) {
     return find(location, null, distance);
   }
 
-  /** Get a portal based upon its inside */
-  public BasePortal findByPortal(@NotNull BlockVector search, Boolean valid) {
-    BasePortal portal =
+  // Get a portal based upon its inside
+  public Portal findByPortal(@NotNull BlockVector search, Boolean valid) {
+    Portal portal =
         indexPortals.entrySet().stream()
             .filter(e -> e.getKey().equals(search))
             .map(Map.Entry::getValue)
@@ -350,19 +337,19 @@ public class PortalManager {
     return null;
   }
 
-  public BasePortal findByPortal(@NotNull Location location) {
+  public Portal findByPortal(@NotNull Location location) {
     return findByPortal(location.toVector().toBlockVector(), null);
   }
 
-  public BasePortal getPortal(@NotNull Location location) {
+  public Portal getPortal(@NotNull Location location) {
     return indexPortalBlocks.get(location.toVector().toBlockVector());
   }
 
-  public BiMap<String, Class<? extends BasePortal>> getPortalClasses() {
+  public BiMap<String, Class<? extends Portal>> getPortalClasses() {
     return this.portalClasses;
   }
 
-  public List<BasePortal> getPortals() {
+  public List<Portal> getPortals() {
     return this.portals;
   }
 

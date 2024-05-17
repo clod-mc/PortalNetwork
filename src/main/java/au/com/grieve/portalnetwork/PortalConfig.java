@@ -16,8 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.portalnetwork.config;
+package au.com.grieve.portalnetwork;
 
+import java.util.List;
+import java.util.Map;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 
-public record BlockConfig(Material active, Material inactive) {}
+public record PortalConfig(
+    ItemConfig item, BlockConfig block, SoundConfig sound, RecipeConfig recipe) {
+  public record ItemConfig(Material block, String name) {}
+
+  public record BlockConfig(Material active, Material inactive) {}
+
+  public record RecipeConfig(List<String> items, Map<Character, Material> mapping) {}
+
+  public record SoundConfig(Sound start, Sound stop) {}
+}

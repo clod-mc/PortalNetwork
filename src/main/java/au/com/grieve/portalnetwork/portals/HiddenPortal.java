@@ -18,26 +18,19 @@
 
 package au.com.grieve.portalnetwork.portals;
 
-import au.com.grieve.portalnetwork.PortalManager;
-import au.com.grieve.portalnetwork.config.PortalConfig;
+import au.com.grieve.portalnetwork.PortalConfig;
 import java.util.Iterator;
-import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.EndGateway;
-import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
 
-public class End extends BasePortal {
-  public End(PortalManager manager, Location location, PortalConfig config) {
-    super(manager, location, config);
+public class HiddenPortal extends Portal {
+  public HiddenPortal(Location location, PortalConfig config) {
+    super(location, config);
   }
 
-  /**
-   * Activate Portal using type of portal as to what is seen/heard
-   */
+  // Activate Portal using type of portal as to what is seen/heard
   @Override
   public void activate() {
     if (!valid || dialledPortal == null || location.getWorld() == null) {
@@ -57,55 +50,15 @@ public class End extends BasePortal {
       block.setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
     }
 
-    for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
-      BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
-
-      if (block.getType() != Material.AIR) {
-        continue;
-      }
-
-      // Ugly hack. If we are in THE END we will display as Nether instead
-      if (location.getWorld().getEnvironment() == World.Environment.THE_END) {
-        block.setType(Material.NETHER_PORTAL);
-
-        Orientable bd = (Orientable) block.getBlockData();
-        if (left.getX() == 0) {
-          bd.setAxis(Axis.Z);
-        } else {
-          bd.setAxis(Axis.X);
-        }
-        block.setBlockData(bd);
-      } else {
-        block.setType(Material.END_GATEWAY);
-
-        EndGateway eg = (EndGateway) block.getState();
-        eg.setAge(-100000000);
-        eg.update();
-      }
-    }
-
     // Play portal sound
     location.getWorld().playSound(location, config.sound().start(), 1f, 1);
   }
 
-  /**
-   * Deactivate Portal
-   */
+  // Deactivate Portal
   @Override
   public void deactivate() {
     if (location.getWorld() == null) {
       return;
-    }
-
-    for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
-      BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
-      if (block.getType() != Material.END_GATEWAY && block.getType() != Material.NETHER_PORTAL) {
-        continue;
-      }
-
-      block.setType(Material.AIR);
     }
 
     // Remove frame

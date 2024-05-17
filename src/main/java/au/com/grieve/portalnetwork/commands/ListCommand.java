@@ -20,7 +20,7 @@ package au.com.grieve.portalnetwork.commands;
 
 import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.PortalNetwork;
-import au.com.grieve.portalnetwork.portals.BasePortal;
+import au.com.grieve.portalnetwork.portals.Portal;
 import java.util.List;
 import java.util.StringJoiner;
 import net.kyori.adventure.text.Component;
@@ -40,7 +40,7 @@ public class ListCommand implements SimpleCommand {
 
     PortalManager portalManager = PortalNetwork.instance.getPortalManager();
 
-    for (BasePortal portal : portalManager.getPortals()) {
+    for (Portal portal : portalManager.getPortals()) {
       if (portal.getLocation().getWorld() == null) {
         continue;
       }
