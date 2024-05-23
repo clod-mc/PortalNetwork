@@ -43,9 +43,9 @@ public class GiveCommand implements SimpleCommand {
       }
       player = (Player) sender;
     } else {
-      player = Bukkit.getPlayerExact(args[1]);
+      player = Bukkit.getPlayerExact(args[0]);
       if (player == null) {
-        throw new CommandError("Unknown player: " + args[1]);
+        throw new CommandError("Unknown player: " + args[0]);
       }
     }
 
