@@ -386,6 +386,12 @@
       <property name="illegalPattern" value="true"/>
       <property name="ignoreComments" value="true"/>
     </module>
+    <!-- glob: require this. references -->
+    <module name="RequireThis">
+      <property name="checkFields" value="true"/>
+      <property name="checkMethods" value="true"/>
+      <property name="validateOnlyOverlapping" value="false"/>
+    </module>
     <!-- clod: forbid variable type inference (`var`) -->
     <module name="IllegalType">
       <property name="illegalClassNames" value="var"/>

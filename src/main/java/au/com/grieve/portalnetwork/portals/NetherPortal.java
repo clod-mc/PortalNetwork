@@ -18,24 +18,34 @@
 
 package au.com.grieve.portalnetwork.portals;
 
-import au.com.grieve.portalnetwork.PortalConfig;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
+import org.jetbrains.annotations.NotNull;
 
 public class NetherPortal extends Portal {
-  public NetherPortal(Location location, PortalConfig config) {
-    super(location, config);
+  public static PortalRecipe RECIPE =
+      new PortalRecipe(
+          List.of("OOP", "ONO", "OOO"),
+          Map.of(
+              'N', Material.NETHERITE_INGOT,
+              'O', Material.OBSIDIAN,
+              'P', Material.ENDER_PEARL));
+
+  public NetherPortal(@NotNull Location location) {
+    super("nether", location);
   }
 
   // Activate Portal using type of portal as to what is seen/heard
   @Override
   public void activate() {
-    if (!valid || dialledPortal == null || location.getWorld() == null) {
+    if (!this.valid || this.dialledPortal == null || this.location.getWorld() == null) {
       return;
     }
 
@@ -44,7 +54,7 @@ public class NetherPortal extends Portal {
     // Draw frame
     for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (block.getType() != Material.AIR && !GLASS_MAPPINGS.contains(block.getType())) {
         continue;
       }
@@ -54,14 +64,14 @@ public class NetherPortal extends Portal {
 
     for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (block.getType() != Material.AIR) {
         continue;
       }
 
       block.setType(Material.NETHER_PORTAL);
       Orientable bd = (Orientable) block.getBlockData();
-      if (left.getX() == 0) {
+      if (this.left.getX() == 0) {
         bd.setAxis(Axis.Z);
       } else {
         bd.setAxis(Axis.X);
@@ -69,20 +79,19 @@ public class NetherPortal extends Portal {
       block.setBlockData(bd);
     }
 
-    // Play portal sound
-    location.getWorld().playSound(location, config.sound().start(), 1f, 1);
+    this.playStartSound(this.location);
   }
 
   // Deactivate Portal
   @Override
   public void deactivate() {
-    if (location.getWorld() == null) {
+    if (this.location.getWorld() == null) {
       return;
     }
 
     for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (block.getType() != Material.NETHER_PORTAL) {
         continue;
       }
@@ -93,7 +102,7 @@ public class NetherPortal extends Portal {
     // Remove frame
     for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (!GLASS_MAPPINGS.contains(block.getType())) {
         continue;
       }
@@ -103,7 +112,6 @@ public class NetherPortal extends Portal {
 
     updateBlock();
 
-    // Play portal sound
-    location.getWorld().playSound(location, config.sound().stop(), 1f, 1);
+    this.playStopSound(this.location);
   }
 }

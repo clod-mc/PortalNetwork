@@ -18,8 +18,8 @@
 
 package au.com.grieve.portalnetwork.commands;
 
-import au.com.grieve.portalnetwork.InvalidPortalException;
-import au.com.grieve.portalnetwork.PortalNetwork;
+import au.com.grieve.portalnetwork.PortalManager;
+import au.com.grieve.portalnetwork.portals.PortalTypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -51,27 +51,19 @@ public class GiveCommand implements SimpleCommand {
 
     String type = "nether";
     if (args.length == 2) {
-      type = args[1];
-      List<String> types =
-          PortalNetwork.instance.getPortalManager().getPortalClasses().keySet().stream()
-              .map(String::toLowerCase)
-              .toList();
-      if (!types.contains(type)) {
+      type = args[1].toLowerCase();
+      if (!PortalTypes.TYPES.contains(type)) {
         throw new CommandError("Invalid portal type: " + type);
       }
     }
 
-    try {
-      ItemStack item = PortalNetwork.instance.getPortalManager().createPortalBlock(type);
-      player.getInventory().addItem(item);
+    ItemStack item = PortalManager.createPortalBlock(type);
+    player.getInventory().addItem(item);
 
-      if (!sender.equals(player)) {
-        player.sendRichMessage("<yellow>You have received a Portal Block");
-      } else {
-        sender.sendRichMessage("<yellow>Giving " + player.getName() + " a Portal Block");
-      }
-    } catch (InvalidPortalException e) {
-      throw new CommandError(e.getMessage());
+    if (!sender.equals(player)) {
+      player.sendRichMessage("<yellow>You have received a Portal Block");
+    } else {
+      sender.sendRichMessage("<yellow>Giving " + player.getName() + " a Portal Block");
     }
   }
 
@@ -87,13 +79,13 @@ public class GiveCommand implements SimpleCommand {
       playerNames.add("@p");
       String prefix = args.length == 0 ? "" : args[0].toLowerCase();
       return playerNames.stream()
-          .filter(name -> name.startsWith(prefix))
+          .filter((String name) -> name.startsWith(prefix))
           .sorted(String::compareToIgnoreCase)
           .toList();
     }
     if (args.length == 2) {
       return Stream.of("nether", "end", "hidden")
-          .filter(name -> name.startsWith(args[1].toLowerCase()))
+          .filter((String name) -> name.startsWith(args[1].toLowerCase()))
           .toList();
     }
     return List.of();

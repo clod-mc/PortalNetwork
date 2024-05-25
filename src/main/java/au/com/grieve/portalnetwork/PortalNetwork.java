@@ -19,93 +19,31 @@
 package au.com.grieve.portalnetwork;
 
 import au.com.grieve.portalnetwork.commands.CommandDispatch;
-import au.com.grieve.portalnetwork.portals.EndPortal;
-import au.com.grieve.portalnetwork.portals.HiddenPortal;
-import au.com.grieve.portalnetwork.portals.NetherPortal;
-import java.util.Map;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
 public final class PortalNetwork extends JavaPlugin {
   public static PortalNetwork instance;
-
-  private PortalManager portalManager;
+  public static PortalManager manager;
 
   public PortalNetwork() {
     instance = this;
+    manager = new PortalManager();
   }
 
   @Override
   public void onEnable() {
+    manager.load();
+    getServer().getPluginManager().registerEvents(new PortalEvents(), PortalNetwork.this);
     this.getServer().getCommandMap().register("pn", new CommandDispatch());
-
-    // Load Portal Manager
-    portalManager = new PortalManager();
-    portalManager.registerPortalClass(
-        "nether",
-        NetherPortal.class,
-        new PortalConfig(
-            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (nether)"),
-            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new PortalConfig.SoundConfig(
-                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new PortalConfig.RecipeConfig(
-                Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
-                Map.of(
-                    'N', Material.NETHERITE_INGOT,
-                    'O', Material.OBSIDIAN,
-                    'P', Material.ENDER_PEARL))));
-    portalManager.registerPortalClass(
-        "end",
-        EndPortal.class,
-        new PortalConfig(
-            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (end)"),
-            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new PortalConfig.SoundConfig(
-                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new PortalConfig.RecipeConfig(
-                Stream.of("EEP", "ENE", "EEE").collect(Collectors.toList()),
-                Map.of(
-                    'N', Material.NETHERITE_INGOT,
-                    'E', Material.END_STONE,
-                    'P', Material.ENDER_PEARL))));
-    portalManager.registerPortalClass(
-        "hidden",
-        HiddenPortal.class,
-        new PortalConfig(
-            new PortalConfig.ItemConfig(Material.GOLD_BLOCK, "Portal Block (hidden)"),
-            new PortalConfig.BlockConfig(Material.BEACON, Material.GOLD_BLOCK),
-            new PortalConfig.SoundConfig(
-                Sound.BLOCK_BEACON_ACTIVATE, Sound.BLOCK_BEACON_DEACTIVATE),
-            new PortalConfig.RecipeConfig(
-                Stream.of("OOP", "ONO", "OOO").collect(Collectors.toList()),
-                Map.of(
-                    'N', Material.NETHERITE_BLOCK,
-                    'O', Material.OBSIDIAN,
-                    'P', Material.ENDER_PEARL))));
-
-    new BukkitRunnable() {
-      @Override
-      public void run() {
-        portalManager.load();
-        getServer().getPluginManager().registerEvents(new PortalEvents(), PortalNetwork.this);
-      }
-    }.runTaskLater(this, 5);
   }
 
   @Override
   public void onDisable() {
-    // Plugin shutdown logic
-    if (portalManager != null) {
-      portalManager.clear();
-    }
+    manager.clear();
     CommandMap commandMap = this.getServer().getCommandMap();
     Command command = commandMap.getCommand("pn");
     if (command != null) {
@@ -113,17 +51,13 @@ public final class PortalNetwork extends JavaPlugin {
     }
   }
 
-  public PortalManager getPortalManager() {
-    return this.portalManager;
-  }
-
   // logging
 
-  public static void logWarning(String message) {
+  public static void logWarning(@NotNull String message) {
     instance.getLogger().warning(message);
   }
 
-  public static void logError(Throwable e) {
+  public static void logError(@NotNull Throwable e) {
     instance
         .getLogger()
         .log(

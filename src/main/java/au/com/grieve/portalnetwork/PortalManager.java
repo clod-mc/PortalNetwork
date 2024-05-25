@@ -18,12 +18,8 @@
 
 package au.com.grieve.portalnetwork;
 
-import au.com.grieve.portalnetwork.portals.EndPortal;
-import au.com.grieve.portalnetwork.portals.HiddenPortal;
-import au.com.grieve.portalnetwork.portals.NetherPortal;
 import au.com.grieve.portalnetwork.portals.Portal;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import au.com.grieve.portalnetwork.portals.PortalTypes;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,24 +34,19 @@ import java.util.stream.Stream;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PortalManager {
-  private final BiMap<String, Class<? extends Portal>> portalClasses = HashBiMap.create();
-
-  private final Map<String, PortalConfig> portalConfig = new HashMap<>();
-
-  // Portals
+  // Live portals
   private final List<Portal> portals = new ArrayList<>();
 
   // Location Maps
@@ -64,37 +55,18 @@ public class PortalManager {
   private final Hashtable<BlockVector, Portal> indexBases = new Hashtable<>();
   private final Hashtable<BlockVector, Portal> indexPortalBlocks = new Hashtable<>();
 
-  // Recipes
-  private final List<NamespacedKey> recipes = new ArrayList<>();
-
-  // Register a new Portal Class
-  public void registerPortalClass(
-      String name, Class<? extends Portal> portalClass, PortalConfig config) {
-    portalClasses.put(name, portalClass);
-    portalConfig.put(name, config);
-
-    // Handle custom recipe
-    if (config.recipe() != null) {
-      PortalConfig.RecipeConfig r = config.recipe();
-      try {
-        ItemStack item = createPortalBlock(name);
-        NamespacedKey key = new NamespacedKey(PortalNetwork.instance, name);
-        ShapedRecipe recipe = new ShapedRecipe(key, item);
-        recipe.shape(r.items().toArray(new String[0]));
-        for (Map.Entry<Character, Material> ingredient : r.mapping().entrySet()) {
-          recipe.setIngredient(ingredient.getKey(), ingredient.getValue());
-        }
-        PortalNetwork.instance.getServer().addRecipe(recipe);
-        recipes.add(key);
-      } catch (InvalidPortalException e) {
-        // ignored
-      }
-    }
+  public static @NotNull ItemStack createPortalBlock(@NotNull String type) {
+    ItemStack item = new ItemStack(Material.GOLD_BLOCK, 1);
+    ItemMeta meta = item.getItemMeta();
+    meta.displayName(Component.text("Portal Block (" + type + ")"));
+    meta.getPersistentDataContainer().set(Portal.PortalTypeKey, PersistentDataType.STRING, type);
+    item.setItemMeta(meta);
+    return item;
   }
 
   public void clear() {
-    while (!portals.isEmpty()) {
-      Portal portal = portals.removeFirst();
+    while (!this.portals.isEmpty()) {
+      Portal portal = this.portals.removeFirst();
       portal.remove();
     }
   }
@@ -125,7 +97,8 @@ public class PortalManager {
         Portal portal;
         try {
           portal =
-              createPortal(portalData.getString("portal_type"), portalData.getLocation("location"));
+              this.createPortal(
+                  portalData.getString("portal_type"), portalData.getLocation("location"));
         } catch (InvalidPortalException e) {
           PortalNetwork.logError(e);
           continue;
@@ -147,14 +120,14 @@ public class PortalManager {
     // Portal Data
     YamlConfiguration portalConfig = new YamlConfiguration();
     ConfigurationSection portalsData = portalConfig.createSection("portals");
-    for (int i = 0; i < portals.size(); i++) {
-      Portal portal = portals.get(i);
+    for (int i = 0; i < this.portals.size(); i++) {
+      Portal portal = this.portals.get(i);
       ConfigurationSection portalData = portalsData.createSection(Integer.toString(i));
 
       if (portal.getDialledPortal() != null) {
         portalData.set("dialled", portal.getDialledPortal().getAddress());
       }
-      portalData.set("portal_type", portalClasses.inverse().get(portal.getClass()));
+      portalData.set("portal_type", portal.getType());
       portalData.set("location", portal.getLocation());
       portalData.set("valid", portal.isValid());
     }
@@ -173,79 +146,46 @@ public class PortalManager {
       throw new InvalidPortalException("Missing portal type");
     }
 
-    Portal portal =
-        switch (portalType) {
-          case "end" -> new EndPortal(location, this.portalConfig.get(portalType));
-          case "nether" -> new NetherPortal(location, this.portalConfig.get(portalType));
-          case "hidden" -> new HiddenPortal(location, this.portalConfig.get(portalType));
-          default -> throw new InvalidPortalException("No such portal type");
-        };
-
-    if (!portalClasses.containsKey(portalType)) {
-      throw new InvalidPortalException("No such portal type");
-    }
-    portals.add(portal);
+    Portal portal = PortalTypes.createPortalAt(portalType, location);
+    this.portals.add(portal);
     return portal;
   }
 
-  public void removePortal(Portal portal) {
-    portals.remove(portal);
-    indexFrames.values().removeIf(v -> v.equals(portal));
-    indexPortals.values().removeIf(v -> v.equals(portal));
-    indexBases.values().removeIf(v -> v.equals(portal));
-    indexPortalBlocks.values().removeIf(v -> v.equals(portal));
-  }
-
-  // Create block based upon portal
-  public ItemStack createPortalBlock(Portal portal) throws InvalidPortalException {
-    return createPortalBlock(getPortalClasses().inverse().get(portal.getClass()));
-  }
-
-  public ItemStack createPortalBlock(String portalType) throws InvalidPortalException {
-    if (!portalClasses.containsKey(portalType) || !portalConfig.containsKey(portalType)) {
-      throw new InvalidPortalException("No such portal type");
-    }
-
-    PortalConfig pc = portalConfig.get(portalType);
-
-    // Create a Portal Block
-    ItemStack item = new ItemStack(pc.item().block(), 1);
-    ItemMeta meta = item.getItemMeta();
-
-    assert meta != null;
-    meta.displayName(Component.text(pc.item().name()));
-    meta.getPersistentDataContainer()
-        .set(Portal.PortalTypeKey, PersistentDataType.STRING, portalType);
-    item.setItemMeta(meta);
-    return item;
+  public void removePortal(@NotNull Portal portal) {
+    this.portals.remove(portal);
+    this.indexFrames.values().removeIf((Portal v) -> v.equals(portal));
+    this.indexPortals.values().removeIf((Portal v) -> v.equals(portal));
+    this.indexBases.values().removeIf((Portal v) -> v.equals(portal));
+    this.indexPortalBlocks.values().removeIf((Portal v) -> v.equals(portal));
   }
 
   public void reindexPortal(Portal portal) {
-    indexPortalBlocks.values().removeIf(v -> v.equals(portal));
-    indexPortalBlocks.put(portal.getLocation().toVector().toBlockVector(), portal);
+    this.indexPortalBlocks.values().removeIf((Portal v) -> v.equals(portal));
+    this.indexPortalBlocks.put(portal.getLocation().toVector().toBlockVector(), portal);
 
-    indexFrames.values().removeIf(v -> v.equals(portal));
+    this.indexFrames.values().removeIf((Portal v) -> v.equals(portal));
     for (Iterator<BlockVector> it = portal.getPortalFrameIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      indexFrames.put(loc, portal);
+      this.indexFrames.put(loc, portal);
     }
 
-    indexPortals.values().removeIf(v -> v.equals(portal));
+    this.indexPortals.values().removeIf((Portal v) -> v.equals(portal));
     for (Iterator<BlockVector> it = portal.getPortalIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      indexPortals.put(loc, portal);
+      this.indexPortals.put(loc, portal);
     }
 
-    indexBases.values().removeIf(v -> v.equals(portal));
+    this.indexBases.values().removeIf((Portal v) -> v.equals(portal));
     for (Iterator<BlockVector> it = portal.getPortalBaseIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      indexBases.put(loc, portal);
+      this.indexBases.put(loc, portal);
     }
   }
 
   // Find a portal
-  public Portal find(Integer network, Integer address, Boolean valid) {
-    for (Portal portal : portals) {
+  public @Nullable Portal find(
+      @NotNull Integer network, @NotNull Integer address, @Nullable Boolean valid) {
+    for (Portal portal : this.portals) {
       if (valid != null && portal.isValid() != valid) {
         continue;
       }
@@ -263,17 +203,18 @@ public class PortalManager {
     return null;
   }
 
-  public Portal find(Integer network, Integer address) {
-    return find(network, address, null);
+  public @Nullable Portal find(@NotNull Integer network, @NotNull Integer address) {
+    return this.find(network, address, null);
   }
 
   // Get a portal at location
-  public Portal find(@NotNull BlockVector search, Boolean valid) {
+  public @Nullable Portal find(@NotNull BlockVector search, @Nullable Boolean valid) {
     Portal portal =
         Stream.concat(
-                indexFrames.entrySet().stream(),
-                Stream.concat(indexPortals.entrySet().stream(), indexBases.entrySet().stream()))
-            .filter(e -> e.getKey().equals(search))
+                this.indexFrames.entrySet().stream(),
+                Stream.concat(
+                    this.indexPortals.entrySet().stream(), this.indexBases.entrySet().stream()))
+            .filter((Map.Entry<BlockVector, Portal> e) -> e.getKey().equals(search))
             .map(Map.Entry::getValue)
             .findFirst()
             .orElse(null);
@@ -287,12 +228,12 @@ public class PortalManager {
   }
 
   // Get a portal at location
-  public Portal find(@NotNull Location location, Boolean valid, int distance) {
+  public @Nullable Portal find(@NotNull Location location, @Nullable Boolean valid, int distance) {
     BlockVector search = location.toVector().toBlockVector();
     Portal portal;
 
     // Check exact match
-    portal = find(search, valid);
+    portal = this.find(search, valid);
 
     if (portal != null) {
       return portal;
@@ -301,7 +242,7 @@ public class PortalManager {
     for (int x = -distance; x < distance; x++) {
       for (int y = -distance; y < distance; y++) {
         for (int z = -distance; z < distance; z++) {
-          portal = find(search.clone().add(new Vector(x, y, z)).toBlockVector(), valid);
+          portal = this.find(search.clone().add(new Vector(x, y, z)).toBlockVector(), valid);
           if (portal != null) {
             return portal;
           }
@@ -312,19 +253,19 @@ public class PortalManager {
     return null;
   }
 
-  public Portal find(@NotNull Location location) {
-    return find(location, null, 0);
+  public @Nullable Portal find(@NotNull Location location) {
+    return this.find(location, null, 0);
   }
 
-  public Portal find(@NotNull Location location, int distance) {
-    return find(location, null, distance);
+  public @Nullable Portal find(@NotNull Location location, int distance) {
+    return this.find(location, null, distance);
   }
 
   // Get a portal based upon its inside
-  public Portal findByPortal(@NotNull BlockVector search, Boolean valid) {
+  public @Nullable Portal findByPortal(@NotNull BlockVector search, @Nullable Boolean valid) {
     Portal portal =
-        indexPortals.entrySet().stream()
-            .filter(e -> e.getKey().equals(search))
+        this.indexPortals.entrySet().stream()
+            .filter((Map.Entry<BlockVector, Portal> e) -> e.getKey().equals(search))
             .map(Map.Entry::getValue)
             .findFirst()
             .orElse(null);
@@ -337,23 +278,15 @@ public class PortalManager {
     return null;
   }
 
-  public Portal findByPortal(@NotNull Location location) {
-    return findByPortal(location.toVector().toBlockVector(), null);
+  public @Nullable Portal findByPortal(@NotNull Location location) {
+    return this.findByPortal(location.toVector().toBlockVector(), null);
   }
 
-  public Portal getPortal(@NotNull Location location) {
-    return indexPortalBlocks.get(location.toVector().toBlockVector());
+  public @Nullable Portal getPortal(@NotNull Location location) {
+    return this.indexPortalBlocks.get(location.toVector().toBlockVector());
   }
 
-  public BiMap<String, Class<? extends Portal>> getPortalClasses() {
-    return this.portalClasses;
-  }
-
-  public List<Portal> getPortals() {
+  public @NotNull List<Portal> getPortals() {
     return this.portals;
-  }
-
-  public List<NamespacedKey> getRecipes() {
-    return this.recipes;
   }
 }

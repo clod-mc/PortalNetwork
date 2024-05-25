@@ -18,7 +18,6 @@
 
 package au.com.grieve.portalnetwork.commands;
 
-import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.PortalNetwork;
 import au.com.grieve.portalnetwork.portals.Portal;
 import java.util.List;
@@ -38,9 +37,7 @@ public class ListCommand implements SimpleCommand {
       throw new CommandError("Unexpected argument(s)");
     }
 
-    PortalManager portalManager = PortalNetwork.instance.getPortalManager();
-
-    for (Portal portal : portalManager.getPortals()) {
+    for (Portal portal : PortalNetwork.manager.getPortals()) {
       if (portal.getLocation().getWorld() == null) {
         continue;
       }

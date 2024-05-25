@@ -18,8 +18,9 @@
 
 package au.com.grieve.portalnetwork.portals;
 
-import au.com.grieve.portalnetwork.PortalConfig;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.bukkit.Axis;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -28,16 +29,25 @@ import org.bukkit.block.Block;
 import org.bukkit.block.EndGateway;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.util.BlockVector;
+import org.jetbrains.annotations.NotNull;
 
 public class EndPortal extends Portal {
-  public EndPortal(Location location, PortalConfig config) {
-    super(location, config);
+  public static PortalRecipe RECIPE =
+      new PortalRecipe(
+          List.of("EEP", "ENE", "EEE"),
+          Map.of(
+              'N', Material.NETHERITE_INGOT,
+              'E', Material.END_STONE,
+              'P', Material.ENDER_PEARL));
+
+  public EndPortal(@NotNull Location location) {
+    super("end", location);
   }
 
   // Activate Portal using type of portal as to what is seen/heard
   @Override
   public void activate() {
-    if (!valid || dialledPortal == null || location.getWorld() == null) {
+    if (!this.valid || this.dialledPortal == null || this.location.getWorld() == null) {
       return;
     }
 
@@ -46,28 +56,28 @@ public class EndPortal extends Portal {
     // Draw frame
     for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (block.getType() != Material.AIR && !GLASS_MAPPINGS.contains(block.getType())) {
         continue;
       }
 
-      block.setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
+      block.setType(GLASS_MAPPINGS.get(this.dialledPortal.getAddress()));
     }
 
     for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
 
       if (block.getType() != Material.AIR) {
         continue;
       }
 
       // Ugly hack. If we are in THE END we will display as Nether instead
-      if (location.getWorld().getEnvironment() == World.Environment.THE_END) {
+      if (this.location.getWorld().getEnvironment() == World.Environment.THE_END) {
         block.setType(Material.NETHER_PORTAL);
 
         Orientable bd = (Orientable) block.getBlockData();
-        if (left.getX() == 0) {
+        if (this.left.getX() == 0) {
           bd.setAxis(Axis.Z);
         } else {
           bd.setAxis(Axis.X);
@@ -82,20 +92,19 @@ public class EndPortal extends Portal {
       }
     }
 
-    // Play portal sound
-    location.getWorld().playSound(location, config.sound().start(), 1f, 1);
+    this.playStartSound(this.location);
   }
 
   // Deactivate Portal
   @Override
   public void deactivate() {
-    if (location.getWorld() == null) {
+    if (this.location.getWorld() == null) {
       return;
     }
 
     for (Iterator<BlockVector> it = getPortalIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (block.getType() != Material.END_GATEWAY && block.getType() != Material.NETHER_PORTAL) {
         continue;
       }
@@ -106,7 +115,7 @@ public class EndPortal extends Portal {
     // Remove frame
     for (Iterator<BlockVector> it = getPortalFrameIterator(); it.hasNext(); ) {
       BlockVector loc = it.next();
-      Block block = loc.toLocation(location.getWorld()).getBlock();
+      Block block = loc.toLocation(this.location.getWorld()).getBlock();
       if (!GLASS_MAPPINGS.contains(block.getType())) {
         continue;
       }
@@ -116,7 +125,6 @@ public class EndPortal extends Portal {
 
     updateBlock();
 
-    // Play portal sound
-    location.getWorld().playSound(location, config.sound().stop(), 1f, 1);
+    this.playStopSound(this.location);
   }
 }

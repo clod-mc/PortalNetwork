@@ -19,6 +19,7 @@
 package au.com.grieve.portalnetwork;
 
 import au.com.grieve.portalnetwork.portals.Portal;
+import au.com.grieve.portalnetwork.portals.PortalTypes;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.GameMode;
@@ -41,6 +42,7 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
+import org.bukkit.inventory.CraftingRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BlockVector;
@@ -52,8 +54,7 @@ public class PortalEvents implements Listener {
   // Stop burning portal
   @EventHandler(ignoreCancelled = true)
   public void onBlockBurnEvent(BlockBurnEvent event) {
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = PortalNetwork.manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockBurn();
     }
@@ -62,8 +63,7 @@ public class PortalEvents implements Listener {
   // Stop Exploding
   @EventHandler(ignoreCancelled = true)
   public void onBlockExplodeEvent(BlockExplodeEvent event) {
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = PortalNetwork.manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockExplode();
     }
@@ -72,8 +72,7 @@ public class PortalEvents implements Listener {
   // Stop ignition
   @EventHandler(ignoreCancelled = true)
   public void onBlockIgniteEvent(BlockIgniteEvent event) {
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getBlock().getLocation());
+    Portal portal = PortalNetwork.manager.find(event.getBlock().getLocation());
     if (portal != null) {
       portal.handleBlockIgnite();
     }
@@ -81,13 +80,11 @@ public class PortalEvents implements Listener {
 
   @EventHandler(ignoreCancelled = true)
   public void onBlockBreakEvent(BlockBreakEvent event) {
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-
     // Check if player is breaking a portal block
-    Portal portal = manager.getPortal(event.getBlock().getLocation());
+    Portal portal = PortalNetwork.manager.getPortal(event.getBlock().getLocation());
     if (portal == null) {
       // Check the rest of the portal
-      portal = manager.find(event.getBlock().getLocation());
+      portal = PortalNetwork.manager.find(event.getBlock().getLocation());
     }
 
     if (portal == null) {
@@ -104,17 +101,12 @@ public class PortalEvents implements Listener {
       event.setDropItems(false);
       if (event.getPlayer().getGameMode() != GameMode.CREATIVE
           && event.getBlock().getLocation().getWorld() != null) {
-        try {
-          event
-              .getBlock()
-              .getLocation()
-              .getWorld()
-              .dropItemNaturally(
-                  event.getBlock().getLocation(),
-                  PortalNetwork.instance.getPortalManager().createPortalBlock(portal));
-        } catch (InvalidPortalException e) {
-          // ignored
-        }
+        event
+            .getBlock()
+            .getLocation()
+            .getWorld()
+            .dropItemNaturally(
+                event.getBlock().getLocation(), PortalManager.createPortalBlock(portal.getType()));
       }
       portal.remove();
       return;
@@ -134,9 +126,7 @@ public class PortalEvents implements Listener {
       return;
     }
 
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getClickedBlock().getLocation());
-
+    Portal portal = PortalNetwork.manager.find(event.getClickedBlock().getLocation());
     if (portal == null) {
       return;
     }
@@ -146,75 +136,65 @@ public class PortalEvents implements Listener {
 
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
-    // Grant knowledge of the crafting recipe to all players.
-    // Ideally this should only happen once the player has picked up
-    // all of the items in a given recipe, but there's too much overhead
-    // to track all that.
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    event.getPlayer().discoverRecipes(manager.getRecipes());
+    // Grant knowledge of the crafting recipe to all players
+    event
+        .getPlayer()
+        .discoverRecipes(PortalTypes.getRecipes().stream().map(CraftingRecipe::getKey).toList());
   }
 
   @EventHandler
   public void onPlayerQuitEvent(PlayerQuitEvent event) {
-    ignore.remove(event.getPlayer());
+    this.ignore.remove(event.getPlayer());
   }
 
   @EventHandler(ignoreCancelled = true)
   public void onPlayerMoveEvent(PlayerMoveEvent event) {
-    // If ignored player has moved enough we stop ignoring
-    if (ignore.containsKey(event.getPlayer())) {
-      if (ignore.get(event.getPlayer()).distanceSquared(event.getPlayer().getLocation().toVector())
-          > 4) {
-        ignore.remove(event.getPlayer());
-      }
-      return;
-    }
-
     // If player has not actually moved, ignore
     if (event.getFrom().toVector().toBlockVector() == event.getTo().toVector().toBlockVector()) {
       return;
     }
 
+    // If ignored player has moved enough we stop ignoring
+    if (this.ignore.containsKey(event.getPlayer())) {
+      if (this.ignore
+              .get(event.getPlayer())
+              .distanceSquared(event.getPlayer().getLocation().toVector())
+          > 4) {
+        this.ignore.remove(event.getPlayer());
+      } else {
+        return;
+      }
+    }
+
     Vector velocity = event.getTo().toVector().subtract(event.getFrom().toVector());
 
-    Location loc = event.getFrom().clone();
-    if (velocity.getZ() < 0) {
-      loc = loc.add(new Vector(0, 0, 0.2));
-    } else {
-      loc = loc.add(new Vector(0, 0, -0.2));
-    }
-
-    if (velocity.getX() < 0) {
-      loc = loc.add(new Vector(0.2, 0, 0));
-    } else {
-      loc = loc.add(new Vector(-0.2, 0, 0));
-    }
-
-    // X and Z to nearest whole number
+    Location loc =
+        event
+            .getFrom()
+            .clone()
+            .add(new Vector(velocity.getX() < 0 ? 0.2 : -0.2, 0, velocity.getZ() < 0 ? 0.2 : -0.2));
     loc.setX(Math.round(loc.getX()));
     loc.setZ(Math.round(loc.getZ()));
 
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.findByPortal(loc);
-
+    Portal portal = PortalNetwork.manager.findByPortal(loc);
     if (portal == null) {
       return;
     }
 
     portal.handlePlayerMove(event);
-    ignore.put(event.getPlayer(), event.getPlayer().getLocation().toVector().toBlockVector());
+    this.ignore.put(event.getPlayer(), event.getPlayer().getLocation().toVector().toBlockVector());
   }
 
   // Handle Vehicle moves
   @EventHandler(ignoreCancelled = true)
   public void onVehicleMoveEvent(VehicleMoveEvent event) {
     // If ignored player has moved enough we stop ignoring
-    if (ignore.containsKey(event.getVehicle())) {
-      if (ignore
+    if (this.ignore.containsKey(event.getVehicle())) {
+      if (this.ignore
               .get(event.getVehicle())
               .distanceSquared(event.getVehicle().getLocation().toVector())
           > 9) {
-        ignore.remove(event.getVehicle());
+        this.ignore.remove(event.getVehicle());
       }
       return;
     }
@@ -243,23 +223,20 @@ public class PortalEvents implements Listener {
     loc.setX(Math.round(loc.getX()));
     loc.setZ(Math.round(loc.getZ()));
 
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.findByPortal(loc);
-
+    Portal portal = PortalNetwork.manager.findByPortal(loc);
     if (portal == null) {
       return;
     }
 
     portal.handleVehicleMove(event);
-    ignore.put(event.getVehicle(), event.getVehicle().getLocation().toVector().toBlockVector());
+    this.ignore.put(
+        event.getVehicle(), event.getVehicle().getLocation().toVector().toBlockVector());
   }
 
   // Probably should move this inside nether/end portal class
   @EventHandler(priority = EventPriority.LOW)
   public void onEntityPortalEvent(EntityPortalEvent event) {
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getFrom(), 2);
-
+    Portal portal = PortalNetwork.manager.find(event.getFrom(), 2);
     if (portal == null) {
       return;
     }
@@ -282,9 +259,7 @@ public class PortalEvents implements Listener {
       return;
     }
 
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getFrom(), 2);
-
+    Portal portal = PortalNetwork.manager.find(event.getFrom(), 2);
     if (portal == null) {
       return;
     }
@@ -308,18 +283,14 @@ public class PortalEvents implements Listener {
         String portalType =
             meta.getPersistentDataContainer().get(Portal.PortalTypeKey, PersistentDataType.STRING);
         try {
-          PortalNetwork.instance
-              .getPortalManager()
-              .createPortal(portalType, event.getBlockPlaced().getLocation());
+          PortalNetwork.manager.createPortal(portalType, event.getBlockPlaced().getLocation());
         } catch (InvalidPortalException e) {
           PortalNetwork.logError(e);
         }
       }
     }
 
-    PortalManager manager = PortalNetwork.instance.getPortalManager();
-    Portal portal = manager.find(event.getBlock().getLocation(), 2);
-
+    Portal portal = PortalNetwork.manager.find(event.getBlock().getLocation(), 2);
     if (portal == null) {
       return;
     }

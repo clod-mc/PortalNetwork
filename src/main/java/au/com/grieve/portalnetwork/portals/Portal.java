@@ -18,8 +18,6 @@
 
 package au.com.grieve.portalnetwork.portals;
 
-import au.com.grieve.portalnetwork.PortalConfig;
-import au.com.grieve.portalnetwork.PortalManager;
 import au.com.grieve.portalnetwork.PortalNetwork;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
@@ -31,6 +29,7 @@ import java.util.StringJoiner;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.Tag;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -43,19 +42,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class Portal {
+public abstract class Portal {
   public static final NamespacedKey PortalTypeKey =
       new NamespacedKey(PortalNetwork.instance, "portal_type");
-
-  // Portal Manager
-  final PortalManager manager;
-
-  // Portal Config
-  final PortalConfig config;
-
-  // Location of Portal Block
-  final Location location;
 
   static final List<Material> WOOL_MAPPINGS =
       List.of(
@@ -75,12 +67,6 @@ public class Portal {
           Material.GREEN_WOOL,
           Material.RED_WOOL,
           Material.BLACK_WOOL);
-
-  // Network (16^2)
-  Integer network;
-
-  // Address (16)
-  Integer address;
   static final List<Material> GLASS_MAPPINGS =
       List.of(
           Material.WHITE_STAINED_GLASS,
@@ -100,41 +86,51 @@ public class Portal {
           Material.RED_STAINED_GLASS,
           Material.BLACK_STAINED_GLASS);
 
+  final String type;
+  final Location location;
+  Integer network;
+  Integer address;
+
   boolean valid = false;
-  // Size Vectors
   BlockVector left;
   BlockVector right;
-  // Dialed
   Portal dialledPortal;
 
-  public Portal(Location location, PortalConfig config) {
-    this.manager = PortalNetwork.instance.getPortalManager();
+  public Portal(@NotNull String type, @NotNull Location location) {
+    this.type = type;
     this.location = location;
-    this.config = config;
-    update();
+    this.update();
   }
+
+  public abstract void activate();
+
+  public abstract void deactivate();
 
   // Load configuration from manager for this portal type
   public Location getLocation() {
-    return location.clone();
+    return this.location.clone();
+  }
+
+  public String getType() {
+    return this.type;
   }
 
   protected void setValid(boolean state) {
-    dial(null);
-    valid = state;
-    updateBlock();
+    this.dial(null);
+    this.valid = state;
+    this.updateBlock();
   }
 
   // Update Portal block based upon state
   protected void updateBlock() {
-    if (valid) {
-      if (dialledPortal != null) {
-        location.getBlock().setType(GLASS_MAPPINGS.get(dialledPortal.getAddress()));
+    if (this.valid) {
+      if (this.dialledPortal != null) {
+        this.location.getBlock().setType(GLASS_MAPPINGS.get(this.dialledPortal.getAddress()));
       } else {
-        location.getBlock().setType(config.block().active());
+        this.location.getBlock().setType(Material.BEACON);
       }
     } else {
-      location.getBlock().setType(config.block().inactive());
+      this.location.getBlock().setType(Material.GOLD_BLOCK);
     }
   }
 
@@ -143,10 +139,10 @@ public class Portal {
     // Check that wool only appears on 3 sides
     List<Location> blocks =
         Arrays.asList(
-            location.clone().add(1, 0, 0),
-            location.clone().add(0, 0, 1),
-            location.clone().add(-1, 0, 0),
-            location.clone().add(0, 0, -1));
+            this.location.clone().add(1, 0, 0),
+            this.location.clone().add(0, 0, 1),
+            this.location.clone().add(-1, 0, 0),
+            this.location.clone().add(0, 0, -1));
 
     int count = 0;
     int nonIdx = -1;
@@ -160,123 +156,123 @@ public class Portal {
     }
 
     if (count != 3 || nonIdx == -1) {
-      setValid(false);
-      manager.reindexPortal(this);
+      this.setValid(false);
+      PortalNetwork.manager.reindexPortal(this);
       return;
     }
 
     // Determine address block. It should be opposite non_idx
     Location addressBlock = blocks.get((nonIdx + 2) % 4);
-    address = WOOL_MAPPINGS.indexOf(addressBlock.getBlock().getType());
-    location.setDirection(location.toVector().subtract(addressBlock.toVector()));
+    this.address = WOOL_MAPPINGS.indexOf(addressBlock.getBlock().getType());
+    this.location.setDirection(this.location.toVector().subtract(addressBlock.toVector()));
 
     // Net block is previous and next to non_idx
     Location leftBlock = blocks.get(((nonIdx - 1) % 4 + 4) % 4);
     Location rightBlock = blocks.get(((nonIdx + 1) % 4 + 4) % 4);
-    network =
+    this.network =
         (WOOL_MAPPINGS.indexOf(leftBlock.getBlock().getType()) << 4)
             + WOOL_MAPPINGS.indexOf(rightBlock.getBlock().getType());
 
     // If address and network already exist pop out the address block
-    Portal p = manager.find(network, address);
+    Portal p = PortalNetwork.manager.find(this.network, this.address);
     if (p != null && p != this) {
       Material material = addressBlock.getBlock().getType();
       addressBlock.getBlock().setType(Material.AIR);
       if (addressBlock.getWorld() != null) {
         addressBlock.getWorld().dropItemNaturally(addressBlock, new ItemStack(material));
       }
-      setValid(false);
-      manager.reindexPortal(this);
+      this.setValid(false);
+      PortalNetwork.manager.reindexPortal(this);
       return;
     }
 
     // Get Width of portal by counting obsidian blocks to a max of 10 each direction
-    Vector leftUnitVector = leftBlock.toVector().subtract(location.toVector()).normalize();
-    left = leftUnitVector.toBlockVector();
+    Vector leftUnitVector = leftBlock.toVector().subtract(this.location.toVector()).normalize();
+    this.left = leftUnitVector.toBlockVector();
     for (int i = 0; i < 10; i++) {
-      Vector testLeft = left.clone().add(leftUnitVector);
-      if (location.clone().add(testLeft).getBlock().getType() != Material.OBSIDIAN) {
+      Vector testLeft = this.left.clone().add(leftUnitVector);
+      if (this.location.clone().add(testLeft).getBlock().getType() != Material.OBSIDIAN) {
         break;
       }
-      left = testLeft.toBlockVector();
+      this.left = testLeft.toBlockVector();
     }
 
-    Vector rightUnitVector = rightBlock.toVector().subtract(location.toVector()).normalize();
-    right = rightUnitVector.toBlockVector();
+    Vector rightUnitVector = rightBlock.toVector().subtract(this.location.toVector()).normalize();
+    this.right = rightUnitVector.toBlockVector();
     for (int i = 0; i < 10; i++) {
-      Vector testRight = right.clone().add(rightUnitVector);
-      if (location.clone().add(testRight).getBlock().getType() != Material.OBSIDIAN) {
+      Vector testRight = this.right.clone().add(rightUnitVector);
+      if (this.location.clone().add(testRight).getBlock().getType() != Material.OBSIDIAN) {
         break;
       }
-      right = testRight.toBlockVector();
+      this.right = testRight.toBlockVector();
     }
 
-    setValid(true);
-    manager.reindexPortal(this);
+    this.setValid(true);
+    PortalNetwork.manager.reindexPortal(this);
   }
 
   // Return portal width
   public int getWidth() {
-    if (!valid) {
+    if (!this.valid) {
       return 1;
     }
-    int width = (int) left.distance(right);
+    int width = (int) this.left.distance(this.right);
     return width + 1;
   }
 
   // Return Portal height
   public int getHeight() {
-    if (!valid) {
+    if (!this.valid) {
       return 1;
     }
-    return (int) Math.ceil(getWidth() / 2f) + 2;
+    return (int) Math.ceil(this.getWidth() / 2f) + 2;
   }
 
-  public boolean dial(Integer address) {
+  public boolean dial(@Nullable Integer address) {
     if (address == null) {
-      dial(null, null);
+      this.dial(null, null);
       return true;
     }
 
-    if (!valid) {
+    if (!this.valid) {
       return false;
     }
 
-    Portal portal = manager.find(network, address);
+    Portal portal = PortalNetwork.manager.find(this.network, address);
     if (portal == null) {
       return false;
     }
 
-    dial(portal, null);
+    this.dial(portal, null);
     return true;
   }
 
-  public void dial(Portal portal, Portal from) {
+  public void dial(@Nullable Portal portal, @Nullable Portal from) {
     if (portal == null) {
-      if (dialledPortal == null) {
+      if (this.dialledPortal == null) {
         return;
       }
 
       // If we are not connected to from we will get our dialed to undial
-      if (from != dialledPortal) {
-        dialledPortal.dial(null, this);
+      if (from != this.dialledPortal) {
+        this.dialledPortal.dial(null, this);
       }
 
-      dialledPortal = null;
-      deactivate();
+      this.dialledPortal = null;
+      this.deactivate();
       return;
     }
 
     // Dialing
 
     // Already Dialed to portal?
-    if (dialledPortal == portal) {
+    if (this.dialledPortal == portal) {
       return;
     }
 
     // If we are not connected to from we will get our dialed to undial
-    if (dialledPortal != null && from != dialledPortal) {
-      dialledPortal.dial(null, this);
+    if (this.dialledPortal != null && from != this.dialledPortal) {
+      this.dialledPortal.dial(null, this);
     }
 
     // If portal is not from we will get it to dial us
@@ -284,22 +280,22 @@ public class Portal {
       portal.dial(this, this);
     }
 
-    dialledPortal = portal;
-    activate();
+    this.dialledPortal = portal;
+    this.activate();
   }
 
   // Dial next available address, otherwise we deactivate.
   public void dialNext() {
-    if (!valid) {
+    if (!this.valid) {
       return;
     }
 
-    int startAddress = dialledPortal == null ? 16 : dialledPortal.getAddress();
+    int startAddress = this.dialledPortal == null ? 16 : this.dialledPortal.getAddress();
 
     for (int i = 1; i < 17; i++) {
       int checkAddress = (startAddress + i) % 17;
 
-      if (checkAddress == address) {
+      if (checkAddress == this.address) {
         continue;
       }
 
@@ -308,20 +304,20 @@ public class Portal {
         break;
       }
 
-      if (dial(checkAddress)) {
+      if (this.dial(checkAddress)) {
         return;
       }
     }
 
     // Deactivate
-    dial(null);
+    this.dial(null);
   }
 
   // Return an iterator over the portal part of the portal
-  public Iterator<BlockVector> getPortalIterator() {
+  public @NotNull Iterator<BlockVector> getPortalIterator() {
 
-    final int maxWidth = getWidth();
-    final int maxHeight = getHeight();
+    final int maxWidth = this.getWidth();
+    final int maxHeight = this.getHeight();
 
     return new Iterator<>() {
       int width = 1;
@@ -329,95 +325,105 @@ public class Portal {
       BlockVector next;
 
       private BlockVector getNext() throws NoSuchElementException {
-        if (!isValid()) {
+        if (!Portal.this.isValid()) {
           throw new NoSuchElementException();
         }
 
-        while (width < maxWidth - 1) {
-          if (height < maxHeight - 1) {
+        while (this.width < maxWidth - 1) {
+          if (this.height < maxHeight - 1) {
             Location check =
-                location.clone().add(left).add(right.clone().normalize().multiply(width));
+                Portal.this
+                    .location
+                    .clone()
+                    .add(Portal.this.left)
+                    .add(Portal.this.right.clone().normalize().multiply(this.width));
 
             // If this location is blocked we continue
-            if (check.clone().add(new Vector(0, 1, 0).multiply(height)).getBlock().getType()
+            if (check.clone().add(new Vector(0, 1, 0).multiply(this.height)).getBlock().getType()
                 == Material.OBSIDIAN) {
               break;
             }
 
-            Location ret = check.clone().add(new Vector(0, 1, 0).multiply(height));
+            Location ret = check.clone().add(new Vector(0, 1, 0).multiply(this.height));
 
             // Something blocking above us? We will reset next round
-            if (check.clone().add(new Vector(0, 1, 0).multiply(height + 1)).getBlock().getType()
+            if (check
+                    .clone()
+                    .add(new Vector(0, 1, 0).multiply(this.height + 1))
+                    .getBlock()
+                    .getType()
                 == Material.OBSIDIAN) {
-              height = 1;
-              width++;
+              this.height = 1;
+              this.width++;
             } else {
-              height++;
+              this.height++;
             }
 
             return ret.toVector().toBlockVector();
           }
-          width++;
-          height = 1;
+          this.width++;
+          this.height = 1;
         }
         throw new NoSuchElementException();
       }
 
       @Override
       public boolean hasNext() {
-        if (next == null) {
+        if (this.next == null) {
           try {
-            next = getNext();
+            this.next = this.getNext();
           } catch (NoSuchElementException e) {
             return false;
           }
         }
-
         return true;
       }
 
       @Override
       public BlockVector next() {
-        if (hasNext()) {
-          BlockVector ret = next;
-          next = null;
+        if (this.hasNext()) {
+          BlockVector ret = this.next;
+          this.next = null;
           return ret;
         }
-
         throw new NoSuchElementException();
       }
     };
   }
 
   // Return an iterator over the portal base
-  public Iterator<BlockVector> getPortalBaseIterator() {
-
-    final int maxWidth = getWidth();
+  public @NotNull Iterator<BlockVector> getPortalBaseIterator() {
+    final int maxWidth = this.getWidth();
 
     return new Iterator<>() {
       int width = 0;
       BlockVector next;
 
       private BlockVector getNext() throws NoSuchElementException {
-        if (!isValid()) {
+        if (!Portal.this.isValid()) {
           // A non-valid portal just returns its own location
-          if (width == 0) {
-            width++;
-            return location.toVector().toBlockVector();
+          if (this.width == 0) {
+            this.width++;
+            return Portal.this.location.toVector().toBlockVector();
           }
           throw new NoSuchElementException();
         }
 
-        if (width < maxWidth) {
-          Location ret = location.clone().add(left).add(right.clone().normalize().multiply(width));
-          width++;
+        if (this.width < maxWidth) {
+          Location ret =
+              Portal.this
+                  .location
+                  .clone()
+                  .add(Portal.this.left)
+                  .add(Portal.this.right.clone().normalize().multiply(this.width));
+          this.width++;
           return ret.toVector().toBlockVector();
         }
 
         // Address block.
-        if (width == maxWidth) {
-          Location ret = location.clone().subtract(location.getDirection());
-          width++;
+        if (this.width == maxWidth) {
+          Location ret = Portal.this.location.clone().subtract(Portal.this.location.getDirection());
+          this.width++;
           return ret.toVector().toBlockVector();
         }
 
@@ -426,9 +432,9 @@ public class Portal {
 
       @Override
       public boolean hasNext() {
-        if (next == null) {
+        if (this.next == null) {
           try {
-            next = getNext();
+            this.next = this.getNext();
           } catch (NoSuchElementException e) {
             return false;
           }
@@ -439,9 +445,9 @@ public class Portal {
 
       @Override
       public BlockVector next() {
-        if (hasNext()) {
-          BlockVector ret = next;
-          next = null;
+        if (this.hasNext()) {
+          BlockVector ret = this.next;
+          this.next = null;
           return ret;
         }
 
@@ -451,10 +457,9 @@ public class Portal {
   }
 
   // Return an iterator over the portal frame
-  public Iterator<BlockVector> getPortalFrameIterator() {
-
-    final int maxWidth = getWidth();
-    final int maxHeight = getHeight();
+  public @NotNull Iterator<BlockVector> getPortalFrameIterator() {
+    final int maxWidth = this.getWidth();
+    final int maxHeight = this.getHeight();
 
     return new Iterator<>() {
       int width = 0;
@@ -462,63 +467,75 @@ public class Portal {
       BlockVector next;
 
       private BlockVector getNext() throws NoSuchElementException {
-        if (!isValid()) {
+        if (!Portal.this.isValid()) {
           throw new NoSuchElementException();
         }
 
-        while (width < maxWidth) {
-          while (height < maxHeight) {
+        while (this.width < maxWidth) {
+          while (this.height < maxHeight) {
             Location check =
-                location.clone().add(left).add(right.clone().normalize().multiply(width));
+                Portal.this
+                    .location
+                    .clone()
+                    .add(Portal.this.left)
+                    .add(Portal.this.right.clone().normalize().multiply(this.width));
 
             // If this location is blocked we continue
-            if (check.clone().add(new Vector(0, 1, 0).multiply(height)).getBlock().getType()
+            if (check.clone().add(new Vector(0, 1, 0).multiply(this.height)).getBlock().getType()
                 == Material.OBSIDIAN) {
               break;
             }
 
             // If we are on either end of the portal, then every height is part of the frame unless
             // blocked
-            if (width == 0 || width == maxWidth - 1) {
-              Location ret = check.clone().add(new Vector(0, 1, 0).multiply(height));
-              if (check.clone().add(new Vector(0, 1, 0).multiply(height + 1)).getBlock().getType()
+            if (this.width == 0 || this.width == maxWidth - 1) {
+              Location ret = check.clone().add(new Vector(0, 1, 0).multiply(this.height));
+              if (check
+                      .clone()
+                      .add(new Vector(0, 1, 0).multiply(this.height + 1))
+                      .getBlock()
+                      .getType()
                   == Material.OBSIDIAN) {
-                height = 1;
-                width++;
+                this.height = 1;
+                this.width++;
               } else {
-                height++;
+                this.height++;
               }
               return ret.toVector().toBlockVector();
             }
 
             // Max height is frame
-            if (height == maxHeight - 1) {
-              Location ret = check.clone().add(new Vector(0, 1, 0).multiply(height));
-              height = 1;
-              width++;
+            if (this.height == maxHeight - 1) {
+              Location ret = check.clone().add(new Vector(0, 1, 0).multiply(this.height));
+              this.height = 1;
+              this.width++;
               return ret.toVector().toBlockVector();
             }
 
             // Something blocking above us? We don't draw frame
-            if (check.clone().add(new Vector(0, 1, 0).multiply(height + 1)).getBlock().getType()
+            if (check
+                    .clone()
+                    .add(new Vector(0, 1, 0).multiply(this.height + 1))
+                    .getBlock()
+                    .getType()
                 == Material.OBSIDIAN) {
               break;
             }
 
             // Else
-            height++;
+            this.height++;
           }
-          width++;
-          height = 1;
+          this.width++;
+          this.height = 1;
         }
         throw new NoSuchElementException();
       }
 
       @Override
       public boolean hasNext() {
-        if (next == null) {
+        if (this.next == null) {
           try {
-            next = getNext();
+            this.next = this.getNext();
           } catch (NoSuchElementException e) {
             return false;
           }
@@ -529,9 +546,9 @@ public class Portal {
 
       @Override
       public BlockVector next() {
-        if (hasNext()) {
-          BlockVector ret = next;
-          next = null;
+        if (this.hasNext()) {
+          BlockVector ret = this.next;
+          this.next = null;
           return ret;
         }
 
@@ -540,24 +557,20 @@ public class Portal {
     };
   }
 
-  // Activate Portal using type of portal as to what is seen/heard
-  public void activate() {
-    throw new UnsupportedOperationException();
-  }
-
-  // Deactivate Portal
-  public void deactivate() {
-    throw new UnsupportedOperationException();
-  }
-
   public void handlePlayerInteract(PlayerInteractEvent event) {
-    if (event.getClickedBlock() == null || !valid) {
+    if (event.getClickedBlock() == null || !this.valid) {
       return;
     }
     // If its not our base we are not interested
-    if (Streams.stream(getPortalBaseIterator())
+    if (Streams.stream(this.getPortalBaseIterator())
         .noneMatch(
-            l -> event.getClickedBlock().getLocation().toVector().toBlockVector().equals(l))) {
+            (BlockVector blockVector) ->
+                event
+                    .getClickedBlock()
+                    .getLocation()
+                    .toVector()
+                    .toBlockVector()
+                    .equals(blockVector))) {
       return;
     }
 
@@ -568,15 +581,15 @@ public class Portal {
     }
 
     // Player has right clicked portal so lets dial next address if any, else deactivate
-    if (valid) {
-      dialNext();
-      manager.save();
+    if (this.valid) {
+      this.dialNext();
+      PortalNetwork.manager.save();
     }
   }
 
   // Return new position and velocity of an entity to dialled portal
   PositionVelocity calculatePosition(Entity entity) {
-    if (getDialledPortal() == null) {
+    if (this.getDialledPortal() == null) {
       return null;
     }
 
@@ -584,8 +597,8 @@ public class Portal {
 
     // teleport to relative portal position
 
-    Location fromPortalLocation = getLocation().add(new Vector(0.5, 0, 0.5));
-    Location toPortalLocation = dialledPortal.getLocation().add(new Vector(0.5, 0, 0.5));
+    Location fromPortalLocation = this.getLocation().add(new Vector(0.5, 0, 0.5));
+    Location toPortalLocation = this.dialledPortal.getLocation().add(new Vector(0.5, 0, 0.5));
     float yawDiff = fromPortalLocation.getYaw() - toPortalLocation.getYaw();
 
     Vector playerRelativePosition = to.toVector().subtract(fromPortalLocation.toVector());
@@ -594,19 +607,21 @@ public class Portal {
     Location destination = toPortalLocation.clone().add(playerRelativePosition);
 
     // Make sure Y is 1 block higher than dest portal
-    if (destination.getY() <= dialledPortal.getLocation().getY()) {
-      destination.setY(dialledPortal.getLocation().getY() + 1);
+    if (destination.getY() <= this.dialledPortal.getLocation().getY()) {
+      destination.setY(this.dialledPortal.getLocation().getY() + 1);
     }
 
     // If destination portal is not wide or tall enough we clip it
-    if (destination.getY() > dialledPortal.getLocation().getY() + dialledPortal.getHeight() - 2) {
-      destination.setY(dialledPortal.getLocation().getY() + dialledPortal.getHeight() - 2);
+    if (destination.getY()
+        > this.dialledPortal.getLocation().getY() + this.dialledPortal.getHeight() - 2) {
+      destination.setY(
+          this.dialledPortal.getLocation().getY() + this.dialledPortal.getHeight() - 2);
     }
 
     Location destinationCheck = destination.clone();
-    destinationCheck.setY(dialledPortal.getLocation().getY());
-    if (dialledPortal.getLocation().distance(destinationCheck)
-        > ((dialledPortal.getWidth() - 2) / 2f)) {
+    destinationCheck.setY(this.dialledPortal.getLocation().getY());
+    if (this.dialledPortal.getLocation().distance(destinationCheck)
+        > ((this.dialledPortal.getWidth() - 2) / 2f)) {
       destination.setX(toPortalLocation.getX());
       destination.setZ(toPortalLocation.getZ());
     }
@@ -642,7 +657,7 @@ public class Portal {
   }
 
   public void handleVehicleMove(VehicleMoveEvent event) {
-    if (getDialledPortal() == null) {
+    if (this.getDialledPortal() == null) {
       return;
     }
 
@@ -655,7 +670,7 @@ public class Portal {
     }
 
     entity.setVelocity(event.getTo().toVector().subtract(event.getFrom().toVector()));
-    PositionVelocity pv = calculatePosition(entity);
+    PositionVelocity pv = this.calculatePosition(entity);
 
     entity.setVelocity(pv.velocity());
     entity.teleport(pv.location());
@@ -668,7 +683,7 @@ public class Portal {
   }
 
   public void handlePlayerMove(PlayerMoveEvent event) {
-    if (getDialledPortal() == null) {
+    if (this.getDialledPortal() == null) {
       return;
     }
 
@@ -687,7 +702,7 @@ public class Portal {
     }
 
     player.setVelocity(event.getTo().toVector().subtract(event.getFrom().toVector()));
-    PositionVelocity pv = calculatePosition(player);
+    PositionVelocity pv = this.calculatePosition(player);
 
     player.setVelocity(pv.velocity());
     player.teleport(pv.location());
@@ -708,11 +723,11 @@ public class Portal {
     }
   }
 
-  public Integer getNetwork() {
+  public @NotNull Integer getNetwork() {
     return this.network;
   }
 
-  public Integer getAddress() {
+  public @NotNull Integer getAddress() {
     return this.address;
   }
 
@@ -720,89 +735,99 @@ public class Portal {
     return this.valid;
   }
 
-  public Portal getDialledPortal() {
+  public @Nullable Portal getDialledPortal() {
     return this.dialledPortal;
   }
 
-  record PositionVelocity(Location location, Vector velocity, double yawDiff) {}
+  record PositionVelocity(@NotNull Location location, @NotNull Vector velocity, double yawDiff) {}
 
   public void handleBlockBreak(BlockBreakEvent event) {
     // If it's the frame we cancel drops
-    if (Streams.stream(getPortalFrameIterator())
-        .anyMatch(l -> event.getBlock().getLocation().toVector().toBlockVector().equals(l))) {
+    if (Streams.stream(this.getPortalFrameIterator())
+        .anyMatch(
+            (BlockVector blockVector) ->
+                event.getBlock().getLocation().toVector().toBlockVector().equals(blockVector))) {
       event.setDropItems(false);
     }
 
-    dial(null);
+    this.dial(null);
 
     new BukkitRunnable() {
       @Override
       public void run() {
-        update();
-        manager.save();
+        Portal.this.update();
+        PortalNetwork.manager.save();
       }
     }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockBurn() {
-    dial(null);
+    this.dial(null);
     new BukkitRunnable() {
       @Override
       public void run() {
-        update();
-        manager.save();
+        Portal.this.update();
+        PortalNetwork.manager.save();
       }
     }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockExplode() {
-    dial(null);
+    this.dial(null);
     new BukkitRunnable() {
       @Override
       public void run() {
-        update();
-        manager.save();
+        Portal.this.update();
+        PortalNetwork.manager.save();
       }
     }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockIgnite() {
-    dial(null);
+    this.dial(null);
     new BukkitRunnable() {
       @Override
       public void run() {
-        update();
-        manager.save();
+        Portal.this.update();
+        PortalNetwork.manager.save();
       }
     }.runTaskLater(PortalNetwork.instance, 3);
   }
 
   public void handleBlockPlace() {
-    dial(null);
-    update();
-    manager.save();
+    this.dial(null);
+    this.update();
+    PortalNetwork.manager.save();
   }
 
   // Remove portal cleanly
   public void remove() {
-    dial(null);
-    deactivate();
-    location.getBlock().setType(Material.STONE);
-    manager.removePortal(this);
+    this.dial(null);
+    this.deactivate();
+    this.location.getBlock().setType(Material.STONE);
+    PortalNetwork.manager.removePortal(this);
+  }
+
+  protected void playStartSound(@NotNull Location location) {
+    location.getWorld().playSound(location, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1);
+  }
+
+  protected void playStopSound(@NotNull Location location) {
+    location.getWorld().playSound(location, Sound.BLOCK_BEACON_DEACTIVATE, 1f, 1);
   }
 
   @Override
   public String toString() {
     String dialed =
-        dialledPortal == null ? "[disconnected]" : dialledPortal.getAddress().toString();
+        this.dialledPortal == null ? "[disconnected]" : this.dialledPortal.getAddress().toString();
     return getClass().getName()
         + "("
         + new StringJoiner(", ")
-            .add("location=" + location)
-            .add("left=" + left)
-            .add("right=" + right)
-            .add("network=" + network)
-            .add("address=" + address)
+            .add("location=" + this.location)
+            .add("left=" + this.left)
+            .add("right=" + this.right)
+            .add("network=" + this.network)
+            .add("address=" + this.address)
             .add("dialed=" + dialed)
         + ")";
   }

@@ -18,8 +18,10 @@
 
 package au.com.grieve.portalnetwork.commands;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CommandError extends Exception {
-  public CommandError(String message) {
+  public CommandError(@NotNull String message) {
     super(message);
   }
 }
